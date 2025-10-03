@@ -1,2 +1,2 @@
-# Ingrid
+# OneGrid
 React Grid Sample
