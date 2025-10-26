@@ -1,2 +1,1 @@
-# OneGrid
-React Grid Sample
+ONE GRID SAMPLE
