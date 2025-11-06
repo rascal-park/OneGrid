@@ -6,7 +6,7 @@ import BasicGridPage from './pages/BasicGridPage';
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         {/* 공통 레이아웃 */}
         <Route element={<DocsLayout />}>
