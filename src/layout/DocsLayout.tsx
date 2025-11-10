@@ -10,8 +10,7 @@ const DocsLayout: React.FC = () => {
 				minHeight: '100vh',
 				backgroundColor: '#1e1e1e',
 				color: '#fff',
-				fontFamily:
-					"ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto",
+				fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto",
 			}}
 		>
 			{/* 왼쪽 사이드바 */}

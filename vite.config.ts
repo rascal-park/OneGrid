@@ -1,8 +1,11 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+// vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  base: '/', // 프로젝트 페이지면 '/repo-name/' 로 바꾸기
-})
+	plugins: [react()],
+	base: '/OneGrid/', // ✅ 레포 이름이랑 똑같이!
+	build: {
+		outDir: 'docs', // ✅ main/docs 로 배포할 거면 이렇게 (아래 설명 참고)
+	},
+});

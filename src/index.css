@@ -1,79 +1,78 @@
 /* 전체 앱 공통 리셋/베이스 ----------------------------------- */
 * {
-  box-sizing: border-box;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+	box-sizing: border-box;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 /* html/body 자체를 다크 풀스크린 레이아웃으로 고정 */
 html,
 body {
-  margin: 0;
-  padding: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: #1e1e1e;
-  color: #fff;
+	margin: 0;
+	padding: 0;
+	min-width: 320px;
+	min-height: 100vh;
+	background-color: #1e1e1e;
+	color: #fff;
 
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  font-weight: 400;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	font-size: 14px;
+	line-height: 1.5;
+	font-weight: 400;
 
-  /* 문서 스타일 느낌을 위해 살짝 더 또렷하게 */
-  text-rendering: optimizeLegibility;
+	/* 문서 스타일 느낌을 위해 살짝 더 또렷하게 */
+	text-rendering: optimizeLegibility;
 }
 
 /* React가 붙는 루트도 전체 채움 */
 #root {
-  min-height: 100vh;
-  background-color: #1e1e1e;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
+	min-height: 100vh;
+	background-color: #1e1e1e;
+	color: inherit;
+	display: flex;
+	flex-direction: column;
 }
 
 /* 링크 기본 스타일 */
 a {
-  font-weight: 500;
-  color: #9ca3ff; /* 연한 보라 */
-  text-decoration: none;
+	font-weight: 500;
+	color: #9ca3ff; /* 연한 보라 */
+	text-decoration: none;
 }
 a:hover {
-  color: #b4b8ff;
+	color: #b4b8ff;
 }
 
 /* 기본 heading 스타일 */
 h1 {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.4;
-  margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+	line-height: 1.4;
+	margin: 0;
 }
 
 /* 버튼 (혹시 쓸 경우) */
 button {
-  border-radius: 6px;
-  border: 1px solid #555;
-  padding: 0.6em 1.2em;
-  font-size: 14px;
-  line-height: 1.4;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  color: #fff;
-  cursor: pointer;
-  transition: border-color 0.2s, background-color 0.2s;
+	border-radius: 6px;
+	border: 1px solid #555;
+	padding: 0.6em 1.2em;
+	font-size: 14px;
+	line-height: 1.4;
+	font-weight: 500;
+	font-family: inherit;
+	background-color: #1a1a1a;
+	color: #fff;
+	cursor: pointer;
+	transition: border-color 0.2s, background-color 0.2s;
 }
 button:hover {
-  border-color: #888;
-  background-color: #2a2a2a;
+	border-color: #888;
+	background-color: #2a2a2a;
 }
 button:focus,
 button:focus-visible {
-  outline: 2px solid #646cff;
-  outline-offset: 2px;
+	outline: 2px solid #646cff;
+	outline-offset: 2px;
 }
 
 /* 라이트 모드 전환은 아예 없애버린다.
