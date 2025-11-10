@@ -1,14 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 
-export type OneGridEditorType = 'text' | 'number' | 'custom';
+/** 에디터 타입 */
+export type OneGridEditorType =
+  | 'text'      // 텍스트 입력
+  | 'number'    // 숫자 입력 (step 가능)
+  | 'date'      // 달력
+  | 'dropdown'  // 싱글/멀티 드롭다운
+  | 'combo'     // 콤보박스 (입력 + 후보 목록)
+  | 'custom';   // 사용자 지정 에디터
 
-export interface CellFormatter {
-  hidden?: boolean; // 이 셀 자체를 안보이게 할 수도 있게 확장 가능 (보통은 column.hidden으로 처리함)
-  render(params: FormatterParams): React.ReactNode;
-}
+/** 렌더러 타입 */
+export type OneGridRendererType =
+  | 'text'      // 텍스트 출력
+  | 'image'     // 이미지 출력 (값은 텍스트)
+  | 'icon'      // 아이콘 + 텍스트
+  | 'checkbox'  // 체크박스 (checkValue/unCheckValue)
+  | 'button'    // 버튼
+  | 'dropdown'  // 드롭다운 리스트 값 출력
+  | 'custom';   // 사용자 지정 렌더러
 
-export interface FormatterParams {
+export interface OneGridRenderParams {
   value: any;
   row: any;
   rowIndex: number;
@@ -16,39 +28,69 @@ export interface FormatterParams {
   column: OneGridColumn;
 }
 
-// 에디터 설정
-export interface CellEditorConfig {
+/** 렌더러 설정 */
+export interface OneGridRendererConfig {
+  type: OneGridRendererType;
+  props?: Record<string, any>;
+  renderCustom?: (params: OneGridRenderParams) => React.ReactNode;
+}
+
+/** 포매터 설정 (값 -> 표시용 값) */
+export interface OneGridFormatterConfig {
+  format?: (
+    value: any,
+    row: any,
+    rowIndex: number,
+    colIndex: number
+  ) => any;
+  render?: (
+    params: OneGridRenderParams & { formattedValue: any }
+  ) => React.ReactNode;
+}
+
+/** 에디터 설정 */
+export interface OneGridEditorConfig {
   type: OneGridEditorType;
-  renderCustomEditor?: (params: EditorParams) => React.ReactNode;
+
+  // dropdown / combo 에서 사용할 옵션
+  options?: { value: any; label: string }[];
+
+  // dropdown 에디터가 멀티인지 여부 (true면 <select multiple>)
+  multiple?: boolean;
+
+  // 숫자 에디터용 옵션 (step/min/max)
+  step?: number;
+  min?: number;
+  max?: number;
+
+  // custom editor
+  renderCustomEditor?: (params: {
+    value: any;
+    row: any;
+    rowIndex: number;
+    colIndex: number;
+    column: OneGridColumn;
+    onChange: (nextValue: any) => void;
+    onCommit: () => void;
+    onCancel: () => void;
+  }) => React.ReactNode;
 }
 
-// Editor 렌더러에 전달되는 파라미터
-export interface EditorParams {
-  value: any;
-  row: any;
-  rowIndex: number;
-  colIndex: number;
-  column: OneGridColumn;
-  onChange: (nextValue: any) => void;
-  onCommit: () => void;
-  onCancel: () => void;
-  onTabNav: (shift: boolean) => void;
-}
-
-// 컬럼 정의
+/** column 정의 */
 export interface OneGridColumn {
   field: string;
   headerName: string;
   width?: number;
   sortable?: boolean;
-  hidden?: boolean; // 전체 컬럼 자체를 숨길지 여부
+  hidden?: boolean;
 
-  // 실제 값 대신 화면에 어떻게 보여줄지
-  // (색 뱃지, 포맷팅, 날짜 포맷 등)
-  formatter?: CellFormatter;
+  renderer?: OneGridRendererConfig;
+  formatter?: OneGridFormatterConfig;
 
-  // 편집방법 정의
-  editor?: CellEditorConfig;
+  // (구버전 호환)
+  renderCell?: (params: OneGridRenderParams) => React.ReactNode;
+
+  editor?: OneGridEditorConfig;
 }
 
 export interface OneGridOptions {
@@ -66,23 +108,19 @@ export interface OneGridProps {
   onRowsChange?: (nextRows: any[]) => void;
 }
 
-// 외부에서 ref로 사용할 수 있는 핸들
 export interface OneGridHandle {
   setRows: (next: any[]) => void;
   getRows: () => any[];
   getActiveCell: () =>
-    | {
-        rowKey: string | number;
-        colField: string;
-      }
+    | { rowKey: string | number; colField: string }
     | null;
   startEditAt: (rowKey: string | number, colField: string) => void;
 }
 
-// 내부적으로 좌표 관리할 때 쓰는 셀 좌표
-export interface CellCoord {
+/** 내부에서 쓰는 셀 좌표 */
+export type CellCoord = {
   rowKey: string | number;
   colField: string;
   rowIndex: number;
   colIndex: number;
-}
+};

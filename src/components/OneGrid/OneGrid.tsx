@@ -133,7 +133,7 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 
     // ===== 편집 상태 =====
     const [editCell, setEditCell] = useState<CellCoord | null>(null);
-    const [draft, setDraft] = useState<string>('');
+    const [draft, setDraft] = useState<any>(''); 
 
     // ===== 정렬 상태 =====
     const [sortState, setSortState] = useState<SortState | null>(
@@ -233,18 +233,18 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
       if (!col || !col.editor || col.field === '__rowNum__') return;
 
       const row = displayRows[target.rowIndex];
-      const currentVal =
-        col.field === '__rowNum__'
-          ? target.rowIndex + 1
-          : row?.[col.field] ?? '';
+     const currentVal =
+    col.field === '__rowNum__'
+      ? target.rowIndex + 1
+      : row?.[col.field] ?? '';
 
-      setActiveCell(target);
-      setEditCell(target);
-      setDraft(
-        initialDraft !== undefined
-          ? initialDraft
-          : String(currentVal ?? '')
-      );
+  setActiveCell(target);
+  setEditCell(target);
+  setDraft(
+    initialDraft !== undefined
+      ? initialDraft
+      : currentVal // ← 굳이 String(...) 안 씌우고 그대로
+  );
     }
 
     // === 편집 커밋 ===
