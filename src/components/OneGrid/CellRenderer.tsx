@@ -132,31 +132,62 @@ function renderByType(type: string, params: RenderByTypeParams): React.ReactNode
 		}
 
 		// 3) 아이콘
-		//    - icon 은 무조건 rendererProps.icon 기준
-		//    - value / formattedValue 는 텍스트로만 사용
+		//    - rendererProps.icon 기준으로 아이콘 표시
+		//    - value / formattedValue 는 라벨 텍스트로만 사용
 		case 'icon': {
 			const onClick = rendererProps.onClick as ((p: OneGridRenderParams) => void) | undefined;
 
 			const position: 'left' | 'right' = rendererProps.position === 'right' ? 'right' : 'left';
 			const size = rendererProps.size ?? 14;
 
+			// 셀 value는 텍스트 라벨 용도
 			const text = formattedValue != null ? String(formattedValue) : String(value ?? '');
 
 			const iconFromProps = rendererProps.icon;
 			let iconNode: React.ReactNode = null;
 
 			if (React.isValidElement(iconFromProps)) {
+				// 1) SVG ReactComponent 같은 경우
 				iconNode = iconFromProps;
 			} else if (typeof iconFromProps === 'string') {
-				iconNode = iconFromProps;
+				// 2) 문자열인 경우 → 이미지 URL or 텍스트 아이콘 구분
+				const isImageUrl = /\.(svg|png|jpe?g|gif|webp)$/i.test(iconFromProps) || iconFromProps.startsWith('data:image');
+
+				if (isImageUrl) {
+					// 이미지 경로 → <img>
+					iconNode = (
+						<img
+							src={iconFromProps}
+							alt={rendererProps.alt ?? ''}
+							style={{
+								width: size,
+								height: size,
+								objectFit: 'contain',
+								display: 'block',
+							}}
+						/>
+					);
+				} else {
+					// 이모지/텍스트 아이콘
+					iconNode = (
+						<span
+							style={{
+								fontSize: size,
+								lineHeight: 1,
+							}}
+						>
+							{iconFromProps}
+						</span>
+					);
+				}
 			}
 
 			const iconEl = iconNode ? (
 				<span
 					style={{
-						fontSize: size,
 						display: 'inline-flex',
 						alignItems: 'center',
+						justifyContent: 'center',
 					}}
 				>
 					{iconNode}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
 import type { OneGridColumn, OneGridHandle } from '../components/OneGrid/types';
+import mailIcon from '@assets/icon/icon_email.svg';
 
 // 공통 dropdown 옵션
 const ROLE_OPTIONS = [
@@ -23,8 +24,8 @@ const initialRows = [
 		num: 10,
 		birth: '1990-01-10',
 		active: 'Y',
-		avatar: 'https://via.placeholder.com/32x32.png?text=P',
-		icon: '⭐',
+		avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPnxefHYLnvWuIF1nChEInB3ekM6BbxYGzHA&s',
+		icon: '1',
 		role: 'ADMIN', // 단일
 		roles: ['ADMIN', 'USER'], // 멀티
 		comboCountry: 'Korea',
@@ -36,8 +37,9 @@ const initialRows = [
 		num: 20,
 		birth: '1992-05-21',
 		active: 'N',
-		avatar: 'https://via.placeholder.com/32x32.png?text=S',
-		icon: '👀',
+		avatar:
+			'https://yt3.googleusercontent.com/c6EUM_bPEI6QYTBP2rNbo_alojFwgrLCr6BjOcf-cskap9z5E00p7hibfn9WV8zxf8Fb4oU1Lg=s900-c-k-c0x00ffffff-no-rj',
+		icon: '2',
 		role: 'USER',
 		roles: ['USER'],
 		comboCountry: 'Japan',
@@ -49,20 +51,19 @@ const initialRows = [
 		num: 30,
 		birth: '1985-09-03',
 		active: 'Y',
-		avatar: 'https://via.placeholder.com/32x32.png?text=H',
-		icon: '📌',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
 		role: 'VIEWER',
 		roles: ['VIEWER', 'USER'],
 		comboCountry: 'USA',
 		action: '로그',
 	},
 ];
-
 const BasicGridPage: React.FC = () => {
 	const [rows, setRows] = useState(initialRows);
 	const gridRef = useRef<OneGridHandle | null>(null);
 
-	// ✅ 모든 컬럼에 renderer + editor 1개씩
+	// Test Columns
 	const columns: OneGridColumn[] = useMemo(
 		() => [
 			{
@@ -157,7 +158,7 @@ const BasicGridPage: React.FC = () => {
 					props: {
 						position: 'left',
 						size: 18,
-						icon: '⭐',
+						icon: mailIcon,
 						onClick: ({ row }: any) => {
 							alert(`아이콘 클릭: ${row.name}`);
 						},
