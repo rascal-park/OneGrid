@@ -1,7 +1,8 @@
-import React, { useState, useRef, useMemo } from 'react';
+import mailIcon from '@assets/icon/icon_email.svg';
+import React, { useMemo, useRef, useState } from 'react';
+import { createDateFormatter, createNumberFormatter } from '../components/OneGrid/formatters';
 import OneGrid from '../components/OneGrid/OneGrid';
 import type { OneGridColumn, OneGridHandle } from '../components/OneGrid/types';
-import mailIcon from '@assets/icon/icon_email.svg';
 
 // 공통 dropdown 옵션
 const ROLE_OPTIONS = [
@@ -21,8 +22,8 @@ const initialRows = [
 	{
 		id: 1,
 		name: '박재형',
-		num: 10,
-		birth: '1990-01-10',
+		num: 100000000,
+		birth: '2025-01-10',
 		active: 'Y',
 		avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPnxefHYLnvWuIF1nChEInB3ekM6BbxYGzHA&s',
 		icon: '1',
@@ -34,8 +35,8 @@ const initialRows = [
 	{
 		id: 2,
 		name: '서영선',
-		num: 20,
-		birth: '1992-05-21',
+		num: 2000,
+		birth: '2025-05-21',
 		active: 'N',
 		avatar:
 			'https://yt3.googleusercontent.com/c6EUM_bPEI6QYTBP2rNbo_alojFwgrLCr6BjOcf-cskap9z5E00p7hibfn9WV8zxf8Fb4oU1Lg=s900-c-k-c0x00ffffff-no-rj',
@@ -48,8 +49,8 @@ const initialRows = [
 	{
 		id: 3,
 		name: '홍길동',
-		num: 30,
-		birth: '1985-09-03',
+		num: 3000,
+		birth: '2025-09-03',
 		active: 'Y',
 		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
 		icon: '3',
@@ -96,6 +97,11 @@ const BasicGridPage: React.FC = () => {
 					type: 'number',
 					step: 1,
 				},
+				formatter: createNumberFormatter({
+					useGrouping: true,
+					decimalPlaces: 0,
+					//unit: '원',
+				}),
 			},
 			{
 				field: 'birth',
@@ -107,6 +113,9 @@ const BasicGridPage: React.FC = () => {
 				editor: {
 					type: 'date', // 더블클릭 → date input + 달력 아이콘
 				},
+				formatter: createDateFormatter({
+					format: 'yyyy/MM/dd', // 'yyyy.MM.dd' 같은 걸로 바꿔도 됨
+				}),
 			},
 			{
 				field: 'active',
