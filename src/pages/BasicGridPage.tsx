@@ -72,6 +72,7 @@ const BasicGridPage: React.FC = () => {
 				headerName: 'ID',
 				width: 60,
 				sortable: true,
+				align: 'left',
 				renderer: { type: 'text' },
 				editor: {
 					type: 'number',
@@ -81,7 +82,9 @@ const BasicGridPage: React.FC = () => {
 			{
 				field: 'name',
 				headerName: '이름(text)',
+				width: 100,
 				sortable: true,
+				align: 'center',
 				renderer: { type: 'text' },
 				editor: {
 					type: 'text',
@@ -90,8 +93,9 @@ const BasicGridPage: React.FC = () => {
 			{
 				field: 'num',
 				headerName: '숫자(number)',
-				width: 80,
+				width: 120,
 				sortable: true,
+				align: 'right',
 				renderer: { type: 'text' },
 				editor: {
 					type: 'number',
@@ -107,6 +111,8 @@ const BasicGridPage: React.FC = () => {
 				field: 'birth',
 				headerName: '생년월일(date)',
 				width: 140,
+				sortable: true,
+				align: 'center',
 				renderer: {
 					type: 'text', // '1990-01-10' 텍스트로 표시
 				},

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { type JSX } from 'react';
 import type { OneGridColumn, OneGridRenderParams } from './types';
 
@@ -21,13 +20,14 @@ const CellRenderer: React.FC<CellRendererProps> = ({ column, value, row, rowInde
 	};
 
 	const formattedValue = column.formatter?.format?.(value, row, rowIndex, colIndex) ?? value;
+	const align = column.align ?? 'left';
 
 	if (column.formatter?.render) {
 		const node = column.formatter.render({
 			...renderParams,
 			formattedValue,
 		});
-		return wrapBase(node, rowHeight);
+		return wrapBase(node, rowHeight, align);
 	}
 
 	if (column.renderer) {
@@ -38,20 +38,35 @@ const CellRenderer: React.FC<CellRendererProps> = ({ column, value, row, rowInde
 			rowHeight,
 			rendererProps: props ?? {},
 		});
-		return wrapBase(node, rowHeight);
+		return wrapBase(node, rowHeight, align);
 	}
 
 	if (column.renderCell) {
 		const node = column.renderCell(renderParams);
-		return wrapBase(node, rowHeight);
+		return wrapBase(node, rowHeight, align);
 	}
 
-	return wrapBase(<span>{formattedValue != null ? String(formattedValue) : ''}</span>, rowHeight);
+	return wrapBase(<span>{formattedValue != null ? String(formattedValue) : ''}</span>, rowHeight, align);
 };
 
 export default CellRenderer;
 
-function wrapBase(content: React.ReactNode, rowHeight: number): JSX.Element {
+function hAlignToJustify(align: 'left' | 'center' | 'right') {
+	switch (align) {
+		case 'center':
+			return 'center';
+		case 'right':
+			return 'flex-end';
+		default:
+			return 'flex-start';
+	}
+}
+
+function wrapBase(
+	content: React.ReactNode,
+	rowHeight: number,
+	align: 'left' | 'center' | 'right' = 'left',
+): JSX.Element {
 	return (
 		<span
 			style={{
@@ -62,6 +77,8 @@ function wrapBase(content: React.ReactNode, rowHeight: number): JSX.Element {
 				lineHeight: `${rowHeight}px`,
 				display: 'inline-flex',
 				alignItems: 'center',
+				justifyContent: hAlignToJustify(align),
+				textAlign: align,
 				width: '100%',
 				gap: 4,
 			}}

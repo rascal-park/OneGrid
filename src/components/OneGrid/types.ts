@@ -78,17 +78,16 @@ export interface OneGridColumn {
 
 	renderer?: OneGridRendererConfig;
 	formatter?: OneGridFormatterConfig;
-
-	// (구버전 호환)
 	renderCell?: (params: OneGridRenderParams) => React.ReactNode;
-
 	editor?: OneGridEditorConfig;
+	align?: 'left' | 'center' | 'right';
 }
 
 export interface OneGridOptions {
 	rowHeight?: number;
 	editable?: boolean;
 	showRowNumber?: boolean;
+	headerAlign?: 'left' | 'center' | 'right';
 }
 
 export interface OneGridProps {

@@ -1,19 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useRef, useEffect, useImperativeHandle, forwardRef, useMemo } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
-import type { OneGridProps, OneGridOptions, OneGridColumn, OneGridHandle, CellCoord } from './types';
+import type { CellCoord, OneGridColumn, OneGridHandle, OneGridOptions, OneGridProps } from './types';
 
-import { injectRowNumberColumn, filterHiddenColumns, getFirstFlexIndex, getCellStyle } from './columnLayout';
+import { filterHiddenColumns, getCellStyle, getFirstFlexIndex, injectRowNumberColumn } from './columnLayout';
 
-import { cloneRows, rowsEqual } from './utilsHistory';
 import { copySelectionToClipboard, pasteFromClipboard } from './utilsClipboard';
+import { cloneRows, rowsEqual } from './utilsHistory';
 import { buildRectSelection } from './utilsSelection';
-import { nextSortState, applySort } from './utilsSort';
+import { applySort, nextSortState } from './utilsSort';
 
 import type { SortState } from './utilsSort';
 
-import CellRenderer from './CellRenderer';
 import CellEditor from './CellEditor';
+import CellRenderer from './CellRenderer';
 
 // 색/스타일 상수
 const headerBg = '#2a2a2a';
@@ -28,6 +27,9 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			editable: optEditable = true,
 			showRowNumber: optShowRowNumber = false,
 		}: OneGridOptions = options ?? {};
+
+		const headerAlign = options?.headerAlign ?? 'center';
+		const justify = headerAlign === 'right' ? 'flex-end' : headerAlign === 'center' ? 'center' : 'flex-start';
 
 		const rowHeight = optRowHeight;
 		const editableGrid = optEditable;
@@ -517,7 +519,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 					{effectiveColumns.map((col, colIdx) => {
 						const isLastCol = colIdx === effectiveColumns.length - 1;
 						const cellStyle = getCellStyle(col, colIdx, isLastCol, firstFlexIndex);
-
 						const isSorted = sortState?.field === col.field;
 
 						return (
@@ -532,6 +533,8 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 									userSelect: 'none',
 									display: 'flex',
 									alignItems: 'center',
+									justifyContent: justify,
+									textAlign: headerAlign,
 									gap: '4px',
 								}}
 								onClick={() => handleHeaderClick(col)}
