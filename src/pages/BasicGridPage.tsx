@@ -1,5 +1,5 @@
 import mailIcon from '@assets/icon/icon_email.svg';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createDateFormatter, createNumberFormatter } from '../components/OneGrid/formatters';
 import OneGrid from '../components/OneGrid/OneGrid';
 import type { OneGridColumn, OneGridHandle } from '../components/OneGrid/types';
@@ -59,6 +59,162 @@ const initialRows = [
 		comboCountry: 'USA',
 		action: '로그',
 	},
+	{
+		id: 4,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 5,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 6,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 7,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 8,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 9,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 10,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 11,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 12,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 13,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 14,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
+	{
+		id: 15,
+		name: '홍길동',
+		num: 3000,
+		birth: '2025-09-03',
+		active: 'Y',
+		avatar: 'https://mobiinsidecontent.s3.ap-northeast-2.amazonaws.com/kr/wp-content/uploads/2023/04/03111103/img.jpg',
+		icon: '3',
+		role: 'VIEWER',
+		roles: ['VIEWER', 'USER'],
+		comboCountry: 'USA',
+		action: '로그',
+	},
 ];
 const BasicGridPage: React.FC = () => {
 	const [rows, setRows] = useState(initialRows);
@@ -89,6 +245,7 @@ const BasicGridPage: React.FC = () => {
 				editor: {
 					type: 'text',
 				},
+				filterType: 'text',
 			},
 			{
 				field: 'num',
@@ -106,6 +263,7 @@ const BasicGridPage: React.FC = () => {
 					decimalPlaces: 0,
 					//unit: '원',
 				}),
+				filterType: 'number',
 			},
 			{
 				field: 'birth',
@@ -127,6 +285,7 @@ const BasicGridPage: React.FC = () => {
 				field: 'active',
 				headerName: '사용여부(checkbox)',
 				width: 150,
+				align: 'center',
 				renderer: {
 					type: 'checkbox',
 					props: {
@@ -145,6 +304,11 @@ const BasicGridPage: React.FC = () => {
 					],
 					multiple: false,
 				},
+				filterType: 'select',
+				filterOptions: [
+					{ value: 'Y', label: '사용' },
+					{ value: 'N', label: '미사용' },
+				],
 			},
 			{
 				field: 'avatar',
@@ -154,7 +318,7 @@ const BasicGridPage: React.FC = () => {
 					type: 'image',
 					props: {
 						fit: 'cover',
-						align: 'center',
+						align: 'left',
 						onClick: ({ row }: any) => {
 							alert(`이미지 클릭: ${row.name}`);
 						},
@@ -168,10 +332,11 @@ const BasicGridPage: React.FC = () => {
 				field: 'icon',
 				headerName: '아이콘(icon)',
 				width: 140,
+				align: 'right',
 				renderer: {
 					type: 'icon',
 					props: {
-						position: 'left',
+						position: 'right',
 						size: 18,
 						icon: mailIcon,
 						onClick: ({ row }: any) => {
@@ -248,6 +413,10 @@ const BasicGridPage: React.FC = () => {
 		[setRows],
 	);
 
+	useEffect(() => {
+		console.log('## GRID DATA :: ', gridRef.current?.getRows());
+	}, []);
+
 	return (
 		<div style={{ color: '#fff' }}>
 			<div style={{ marginBottom: '16px' }}>
@@ -295,6 +464,14 @@ const BasicGridPage: React.FC = () => {
 						rowHeight: 35,
 						editable: true,
 						showRowNumber: true,
+						headerAlign: 'center',
+						scroll: {
+							x: 'visible',
+							y: 'visible',
+						},
+						enableColumnReorder: true,
+						enableColumnResize: true,
+						enableHeaderFilter: true,
 					}}
 					onRowsChange={updatedRows => {
 						setRows(updatedRows);

@@ -26,14 +26,22 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			rowHeight: optRowHeight = 32,
 			editable: optEditable = true,
 			showRowNumber: optShowRowNumber = false,
+			headerAlign = 'center',
+			scroll,
+			enableColumnReorder = false,
+			enableColumnResize = false,
+			enableHeaderFilter = false, // ✅ 헤더 필터 토글 옵션
 		}: OneGridOptions = options ?? {};
 
-		const headerAlign = options?.headerAlign ?? 'center';
-		const justify = headerAlign === 'right' ? 'flex-end' : headerAlign === 'center' ? 'center' : 'flex-start';
+		const headerJustify: 'flex-start' | 'center' | 'flex-end' =
+			headerAlign === 'right' ? 'flex-end' : headerAlign === 'center' ? 'center' : 'flex-start';
 
 		const rowHeight = optRowHeight;
 		const editableGrid = optEditable;
 		const showRowNumber = optShowRowNumber;
+
+		const overflowX = scroll?.x ?? 'auto';
+		const overflowY = scroll?.y ?? 'auto';
 
 		// 루트 focus(키보드 단축키, 복붙 등 처리하려고)
 		const gridRootRef = useRef<HTMLDivElement | null>(null);
@@ -98,23 +106,116 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const [_redoStack, setRedoStack] = useState<any[][]>([]);
 
-		// 컬럼 가공:
-		//  1) showRowNumber == true 면 rowNum 컬럼 prepend
-		//  2) hidden 컬럼 제외
+		// ===== 컬럼 순서/크기 상태 =====
+		// field 기준으로 순서를 기억 (rowNumber 컬럼 제외)
+		const [columnOrder, setColumnOrder] = useState<string[] | null>(null);
+
+		// field 별 width (사용자가 리사이즈한 값만 저장)
+		const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+
+		// 헤더 드래그용
+		const [dragColField, setDragColField] = useState<string | null>(null);
+
+		// 리사이즈 중 상태
+		const [resizing, setResizing] = useState<{
+			field: string;
+			startX: number;
+			startWidth: number;
+		} | null>(null);
+
+		// === 필터 상태 ===
+		// 각 컬럼 field -> 필터값 (text/number/select 공용)
+		const [columnFilters, setColumnFilters] = useState<Record<string, any>>({});
+
+		// 컬럼 바뀌면 존재하지 않는 필터는 정리
+		useEffect(() => {
+			setColumnFilters(prev => {
+				const next: Record<string, any> = {};
+				columns.forEach(c => {
+					if (Object.prototype.hasOwnProperty.call(prev, c.field)) {
+						next[c.field] = prev[c.field];
+					}
+				});
+				return next;
+			});
+		}, [columns]);
+
+		// order 적용된 컬럼 배열 (rowNumber 넣기 전)
+		const orderedBaseColumns: OneGridColumn[] = useMemo(() => {
+			if (!columnOrder) return columns;
+
+			const map = new Map(columns.map(c => [c.field, c]));
+			const ordered: OneGridColumn[] = [];
+
+			columnOrder.forEach(field => {
+				const col = map.get(field);
+				if (col) ordered.push(col);
+			});
+
+			// 혹시 빠진 컬럼 있으면 뒤에 추가
+			columns.forEach(col => {
+				if (!ordered.includes(col)) ordered.push(col);
+			});
+
+			return ordered;
+		}, [columns, columnOrder]);
+
 		const effectiveColumns: OneGridColumn[] = useMemo(() => {
-			const injected = injectRowNumberColumn(columns, showRowNumber);
+			const injected = injectRowNumberColumn(orderedBaseColumns, showRowNumber);
 			return filterHiddenColumns(injected);
-		}, [columns, showRowNumber]);
+		}, [orderedBaseColumns, showRowNumber]);
 
 		// flex 규칙 기준이 되는 "width 없는 첫 번째 컬럼 인덱스"
 		const firstFlexIndex = useMemo(() => {
 			return getFirstFlexIndex(effectiveColumns);
 		}, [effectiveColumns]);
 
+		// === 필터 적용 ===
+		const filteredRows = useMemo(() => {
+			if (!enableHeaderFilter) return internalRows;
+
+			const activeFields = Object.keys(columnFilters).filter(key => {
+				const v = columnFilters[key];
+				return v !== undefined && v !== null && v !== '';
+			});
+			if (activeFields.length === 0) return internalRows;
+
+			return internalRows.filter(row => {
+				return activeFields.every(field => {
+					const col = effectiveColumns.find(c => c.field === field);
+					if (!col || !col.filterType) return true;
+
+					const filterVal = columnFilters[field];
+					const raw = row[field];
+
+					// 필터 타입별 매칭 규칙
+					if (col.filterType === 'text') {
+						if (filterVal === '') return true;
+						if (raw === undefined || raw === null) return false;
+						return String(raw).toLowerCase().includes(String(filterVal).toLowerCase());
+					}
+
+					if (col.filterType === 'number') {
+						if (filterVal === '') return true;
+						const numVal = Number(filterVal);
+						if (Number.isNaN(numVal)) return true; // 숫자 아니면 필터 무시
+						return Number(raw) === numVal;
+					}
+
+					if (col.filterType === 'select') {
+						if (filterVal === '') return true;
+						return raw === filterVal;
+					}
+
+					return true;
+				});
+			});
+		}, [internalRows, columnFilters, enableHeaderFilter, effectiveColumns]);
+
 		// 정렬 적용된 화면 표시용 rows
 		const displayRows = useMemo(() => {
-			return applySort(internalRows, sortState);
-		}, [internalRows, sortState]);
+			return applySort(filteredRows, sortState);
+		}, [filteredRows, sortState]);
 
 		// === 히스토리 스냅샷 추가 ===
 		function pushHistoryBeforeChange() {
@@ -180,9 +281,7 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 
 			setActiveCell(target);
 			setEditCell(target);
-			setDraft(
-				initialDraft !== undefined ? initialDraft : currentVal, // ← 굳이 String(...) 안 씌우고 그대로
-			);
+			setDraft(initialDraft !== undefined ? initialDraft : currentVal);
 		}
 
 		// === 편집 커밋 ===
@@ -482,7 +581,49 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			},
 		}));
 
+		// columns prop 이 처음 들어왔을 때 순서 초기화
+		useEffect(() => {
+			setColumnOrder(prev => {
+				const base = columns.map(c => c.field);
+				if (!prev) return base;
+
+				// 이전 order에서 살아있는 애들만 유지 + 새로 생긴 컬럼 뒤에 추가
+				const remained = prev.filter(f => base.includes(f));
+				const added = base.filter(f => !remained.includes(f));
+				return [...remained, ...added];
+			});
+		}, [columns]);
+
+		useEffect(() => {
+			if (!resizing) return;
+
+			const { field, startX, startWidth } = resizing;
+
+			function handleMouseMove(ev: MouseEvent) {
+				const delta = ev.clientX - startX;
+				const nextWidth = Math.max(40, startWidth + delta); // 최소 40px
+
+				setColumnWidths(prev => ({
+					...prev,
+					[field]: nextWidth,
+				}));
+			}
+
+			function handleMouseUp() {
+				setResizing(null);
+			}
+
+			window.addEventListener('mousemove', handleMouseMove);
+			window.addEventListener('mouseup', handleMouseUp);
+			return () => {
+				window.removeEventListener('mousemove', handleMouseMove);
+				window.removeEventListener('mouseup', handleMouseUp);
+			};
+		}, [resizing]);
+
 		// ===================== 렌더 =====================
+		const headerHeight = enableHeaderFilter ? rowHeight * 2 : rowHeight;
+
 		return (
 			<div
 				ref={gridRootRef}
@@ -500,144 +641,333 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				tabIndex={0}
 				onKeyDown={handleGridKeyDown}
 			>
-				{/* HEADER */}
-				<div
-					style={{
-						display: 'flex',
-						minWidth: 0,
-						width: '100%',
-						backgroundColor: headerBg,
-						borderBottom: `1px solid ${border}`,
-						height: rowHeight,
-						lineHeight: `${rowHeight}px`,
-						fontWeight: 600,
-						position: 'sticky',
-						top: 0,
-						zIndex: 2,
-					}}
-				>
-					{effectiveColumns.map((col, colIdx) => {
-						const isLastCol = colIdx === effectiveColumns.length - 1;
-						const cellStyle = getCellStyle(col, colIdx, isLastCol, firstFlexIndex);
-						const isSorted = sortState?.field === col.field;
-
-						return (
-							<div
-								key={col.field}
-								style={{
-									...cellStyle,
-									borderRight: isLastCol ? 'none' : `1px solid ${border}`,
-									backgroundColor: headerBg,
-									fontWeight: 600,
-									cursor: col.sortable ? 'pointer' : 'default',
-									userSelect: 'none',
-									display: 'flex',
-									alignItems: 'center',
-									justifyContent: justify,
-									textAlign: headerAlign,
-									gap: '4px',
-								}}
-								onClick={() => handleHeaderClick(col)}
-							>
-								<span>{col.headerName}</span>
-								{isSorted && (
-									<span
-										style={{
-											fontSize: 10,
-											color: '#aaa',
-											lineHeight: 1,
-										}}
-									>
-										{sortState?.direction === 'asc' ? '▲' : '▼'}
-									</span>
-								)}
-							</div>
-						);
-					})}
-				</div>
-
-				{/* BODY */}
+				{/* 공통 스크롤 컨테이너 (HEADER + BODY 같이 들어감) */}
 				<div
 					style={{
 						flex: 1,
-						overflow: 'auto',
+						overflowX, // options.scroll.x 반영
+						overflowY, // options.scroll.y 반영
+						position: 'relative',
 					}}
 				>
-					{displayRows.map((row, rowIndex) => {
-						const rowKeyVal = getRowKey(row);
-						const zebraBg = rowIndex % 2 === 0 ? bodyBgA : bodyBgB;
+					{/* HEADER */}
+					<div
+						style={{
+							display: 'flex',
+							minWidth: 0,
+							width: '100%',
+							backgroundColor: headerBg,
+							borderBottom: `1px solid ${border}`,
+							height: headerHeight,
+							fontWeight: 600,
+							position: 'sticky',
+							top: 0,
+							zIndex: 2,
+						}}
+					>
+						{effectiveColumns.map((col, colIdx) => {
+							const isLastCol = colIdx === effectiveColumns.length - 1;
+							let cellStyle = getCellStyle(col, colIdx, isLastCol, firstFlexIndex);
 
-						return (
-							<div
-								key={rowKeyVal ?? rowIndex}
-								style={{
-									display: 'flex',
-									minWidth: 0,
-									width: '100%',
-									borderBottom: '1px solid #333',
-									backgroundColor: zebraBg,
-									height: rowHeight,
-									lineHeight: `${rowHeight}px`,
-								}}
-							>
-								{effectiveColumns.map((col, colIndex) => {
-									const isLastCol = colIndex === effectiveColumns.length - 1;
-									const cellStyle = getCellStyle(col, colIndex, isLastCol, firstFlexIndex);
+							const isSorted = sortState?.field === col.field;
 
-									const coordKey = `${rowKeyVal}::${col.field}`;
+							const overrideWidth = columnWidths[col.field];
+							if (overrideWidth != null) {
+								cellStyle = {
+									...cellStyle,
+									width: overrideWidth,
+									minWidth: overrideWidth,
+									flex: '0 0 auto',
+								};
+							}
 
-									const isSelected = selectedCells.has(coordKey);
+							const isDraggable = enableColumnReorder && col.field !== '__rowNum__';
+							const canResize = enableColumnResize && col.field !== '__rowNum__';
 
-									const isActiveNow =
-										activeCell && activeCell.rowKey === rowKeyVal && activeCell.colField === col.field;
+							const hasFilter = enableHeaderFilter && col.filterType && col.field !== '__rowNum__';
+							const filterValue = columnFilters[col.field] ?? '';
 
-									const isEditingNow = editCell && editCell.rowKey === rowKeyVal && editCell.colField === col.field;
-
-									const rawVal = col.field === '__rowNum__' ? rowIndex + 1 : row[col.field];
-
-									return (
-										<div
-											key={col.field}
-											style={{
-												...cellStyle,
-												borderRight: isLastCol ? 'none' : '1px solid #333',
-												backgroundColor: isEditingNow ? '#3a3a3a' : isSelected ? '#4a4a4a' : zebraBg,
-												outline: isActiveNow ? '1px solid #888' : '1px solid transparent',
-												display: 'flex',
-												alignItems: 'center',
-												position: 'relative',
+							// 필터 UI 만들기
+							let filterElement: React.ReactNode = null;
+							if (hasFilter) {
+								if (col.filterType === 'text' || col.filterType === 'number') {
+									filterElement = (
+										<input
+											type={col.filterType === 'number' ? 'number' : 'text'}
+											value={filterValue}
+											onChange={e => {
+												const v = e.target.value;
+												setColumnFilters(prev => ({
+													...prev,
+													[col.field]: v,
+												}));
 											}}
-											onClick={e => handleCellClick(e, rowIndex, colIndex)}
-											onDoubleClick={() => handleCellDoubleClick(rowIndex, colIndex)}
-											onKeyDown={e => handleCellKeyDown(e, rowIndex, colIndex)}
-											tabIndex={0}
-										>
-											{isEditingNow ? (
-												<CellEditor
-													column={col}
-													draft={draft}
-													rowHeight={rowHeight}
-													onChangeDraft={v => setDraft(v)}
-													onCommit={commitEdit}
-													onCancel={cancelEdit}
-													onTabNav={moveEditByTab}
-												/>
-											) : (
-												<CellRenderer
-													column={col}
-													value={rawVal}
-													row={row}
-													rowIndex={rowIndex}
-													colIndex={colIndex}
-													rowHeight={rowHeight}
-												/>
-											)}
-										</div>
+											onClick={e => e.stopPropagation()}
+											onMouseDown={e => e.stopPropagation()}
+											onKeyDown={e => e.stopPropagation()}
+											style={{
+												width: '100%',
+												height: 20,
+												fontSize: 11,
+												padding: '0 4px',
+												backgroundColor: '#1a1a1a',
+												border: '1px solid #555',
+												color: '#fff',
+												borderRadius: 2,
+											}}
+										/>
 									);
-								})}
-							</div>
-						);
-					})}
+								} else if (col.filterType === 'select') {
+									filterElement = (
+										<select
+											value={filterValue}
+											onChange={e => {
+												const v = e.target.value;
+												setColumnFilters(prev => ({
+													...prev,
+													[col.field]: v,
+												}));
+											}}
+											onClick={e => e.stopPropagation()}
+											onMouseDown={e => e.stopPropagation()}
+											onKeyDown={e => e.stopPropagation()}
+											style={{
+												width: '100%',
+												height: 20,
+												fontSize: 11,
+												padding: '0 4px',
+												backgroundColor: '#1a1a1a',
+												border: '1px solid #555',
+												color: '#fff',
+												borderRadius: 2,
+											}}
+										>
+											<option value="">전체</option>
+											{col.filterOptions?.map(opt => (
+												<option key={String(opt.value)} value={opt.value}>
+													{opt.label}
+												</option>
+											))}
+										</select>
+									);
+								}
+							}
+
+							return (
+								<div
+									key={col.field}
+									draggable={isDraggable}
+									onDragStart={e => {
+										if (!isDraggable) return;
+										setDragColField(col.field);
+										e.dataTransfer?.setData('text/plain', col.field);
+									}}
+									onDragOver={e => {
+										if (!isDraggable || !dragColField || col.field === '__rowNum__') return;
+										e.preventDefault();
+									}}
+									onDrop={() => {
+										if (!isDraggable || !dragColField || dragColField === col.field) {
+											setDragColField(null);
+											return;
+										}
+										setColumnOrder(prev => {
+											if (!prev) return prev;
+											const from = prev.indexOf(dragColField);
+											const to = prev.indexOf(col.field);
+											if (from < 0 || to < 0) return prev;
+
+											const next = [...prev];
+											next.splice(from, 1);
+											next.splice(to, 0, dragColField);
+											return next;
+										});
+										setDragColField(null);
+									}}
+									style={{
+										...cellStyle,
+										borderRight: isLastCol ? 'none' : `1px solid ${border}`,
+										backgroundColor: headerBg,
+										fontWeight: 600,
+										userSelect: 'none',
+										display: 'flex',
+										flexDirection: hasFilter ? 'column' : 'row',
+										alignItems: hasFilter ? 'stretch' : 'center',
+										justifyContent: hasFilter ? 'flex-start' : 'center',
+										position: 'relative', // 리사이즈 핸들 위치용
+										padding: hasFilter ? '2px 4px' : '0 4px',
+										boxSizing: 'border-box',
+										gap: hasFilter ? 2 : 0,
+									}}
+								>
+									{/* 정렬/헤더 클릭 영역 (여기에만 onClick) */}
+									<div
+										style={{
+											flex: hasFilter ? '0 0 auto' : 1,
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: headerJustify,
+											textAlign: headerAlign,
+											gap: 4,
+											cursor: col.sortable ? 'pointer' : 'default',
+											paddingRight: canResize && !hasFilter ? 4 : 0, // 핸들 영역
+											fontSize: 12,
+										}}
+										onClick={() => {
+											if (!col.sortable) return;
+											handleHeaderClick(col);
+										}}
+									>
+										<span>{col.headerName}</span>
+										{isSorted && (
+											<span
+												style={{
+													fontSize: 10,
+													color: '#aaa',
+													lineHeight: 1,
+												}}
+											>
+												{sortState?.direction === 'asc' ? '▲' : '▼'}
+											</span>
+										)}
+									</div>
+
+									{/* 필터 영역 */}
+									{hasFilter && (
+										<div
+											style={{
+												flex: '0 0 auto',
+												marginTop: 2,
+											}}
+										>
+											{filterElement}
+										</div>
+									)}
+
+									{/* 리사이즈 핸들 */}
+									{canResize && (
+										<span
+											onMouseDown={e => {
+												e.preventDefault();
+												e.stopPropagation(); // 헤더 클릭 막기
+
+												const baseWidth =
+													columnWidths[col.field] ??
+													(typeof cellStyle.width === 'number'
+														? cellStyle.width
+														: typeof col.width === 'number'
+														? col.width
+														: 100);
+
+												setResizing({
+													field: col.field,
+													startX: e.clientX,
+													startWidth: baseWidth,
+												});
+											}}
+											style={{
+												position: 'absolute',
+												right: 0,
+												top: 0,
+												width: 4,
+												height: '100%',
+												cursor: 'col-resize',
+												userSelect: 'none',
+											}}
+										/>
+									)}
+								</div>
+							);
+						})}
+					</div>
+
+					{/* BODY */}
+					<div>
+						{displayRows.map((row, rowIndex) => {
+							const rowKeyVal = getRowKey(row);
+							const zebraBg = rowIndex % 2 === 0 ? bodyBgA : bodyBgB;
+
+							return (
+								<div
+									key={rowKeyVal ?? rowIndex}
+									style={{
+										display: 'flex',
+										minWidth: 0,
+										width: '100%',
+										borderBottom: '1px solid #333',
+										backgroundColor: zebraBg,
+										height: rowHeight,
+										lineHeight: `${rowHeight}px`,
+									}}
+								>
+									{effectiveColumns.map((col, colIndex) => {
+										const isLastCol = colIndex === effectiveColumns.length - 1;
+										let cellStyle = getCellStyle(col, colIndex, isLastCol, firstFlexIndex);
+
+										const overrideWidth = columnWidths[col.field];
+										if (overrideWidth != null) {
+											cellStyle = {
+												...cellStyle,
+												width: overrideWidth,
+												minWidth: overrideWidth,
+												flex: '0 0 auto',
+											};
+										}
+
+										const coordKey = `${rowKeyVal}::${col.field}`;
+										const isSelected = selectedCells.has(coordKey);
+
+										const isActiveNow =
+											activeCell && activeCell.rowKey === rowKeyVal && activeCell.colField === col.field;
+
+										const isEditingNow = editCell && editCell.rowKey === rowKeyVal && editCell.colField === col.field;
+
+										const rawVal = col.field === '__rowNum__' ? rowIndex + 1 : row[col.field];
+
+										return (
+											<div
+												key={col.field}
+												style={{
+													...cellStyle,
+													borderRight: isLastCol ? 'none' : '1px solid #333',
+													backgroundColor: isEditingNow ? '#3a3a3a' : isSelected ? '#4a4a4a' : zebraBg,
+													outline: isActiveNow ? '1px solid #888' : '1px solid transparent',
+													display: 'flex',
+													alignItems: 'center',
+													position: 'relative',
+												}}
+												onClick={e => handleCellClick(e, rowIndex, colIndex)}
+												onDoubleClick={() => handleCellDoubleClick(rowIndex, colIndex)}
+												onKeyDown={e => handleCellKeyDown(e, rowIndex, colIndex)}
+												tabIndex={0}
+											>
+												{isEditingNow ? (
+													<CellEditor
+														column={col}
+														draft={draft}
+														rowHeight={rowHeight}
+														onChangeDraft={v => setDraft(v)}
+														onCommit={commitEdit}
+														onCancel={cancelEdit}
+														onTabNav={moveEditByTab}
+													/>
+												) : (
+													<CellRenderer
+														column={col}
+														value={rawVal}
+														row={row}
+														rowIndex={rowIndex}
+														colIndex={colIndex}
+														rowHeight={rowHeight}
+													/>
+												)}
+											</div>
+										);
+									})}
+								</div>
+							);
+						})}
+					</div>
 				</div>
 			</div>
 		);
