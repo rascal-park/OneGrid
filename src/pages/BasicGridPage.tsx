@@ -459,15 +459,15 @@ const BasicGridPage: React.FC = () => {
 					columns={columns}
 					rows={rows}
 					rowKeyField="id"
-					height={360}
+					height={500}
 					options={{
 						rowHeight: 35,
 						editable: true,
 						showRowNumber: true,
 						headerAlign: 'center',
 						scroll: {
-							x: 'visible',
-							y: 'visible',
+							x: 'scroll',
+							y: 'scroll',
 						},
 						enableColumnReorder: true,
 						enableColumnResize: true,

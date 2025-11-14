@@ -91,8 +91,8 @@ export interface OneGridOptions {
 	showRowNumber?: boolean;
 	headerAlign?: 'left' | 'center' | 'right';
 	scroll?: {
-		x?: 'auto' | 'hidden' | 'visible';
-		y?: 'auto' | 'hidden' | 'visible';
+		x?: 'auto' | 'hidden' | 'scroll';
+		y?: 'auto' | 'hidden' | 'scroll';
 	};
 	enableColumnReorder?: boolean;
 	enableColumnResize?: boolean;
