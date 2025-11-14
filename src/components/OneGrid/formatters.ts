@@ -1,5 +1,5 @@
 // src/components/OneGrid/formatters.ts
-import type { OneGridFormatterConfig } from './types';
+import type { OneGridFormatterConfig } from '../../types/types';
 
 /**
  * 숫자 포매터 옵션

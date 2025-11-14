@@ -1,30 +1,29 @@
-// src/pages/BasicGridPage.tsx (기존 BasicGridPage를 "기본 출력" 버전으로 변경)
+// src/pages/FormatterDemoPage.tsx
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
-import { createBasicColumns } from '../types/demoCloumns';
+import { createFormatterColumns } from '../types/demoCloumns';
 import { DEMO_ROWS } from '../types/demoRows';
 import type { OneGridColumn, OneGridHandle } from '../types/types';
 
-const BasicGridPage: React.FC = () => {
-	const [rows, setRows] = useState(DEMO_ROWS);
+const FormatterDemoPage: React.FC = () => {
+	const [rows] = useState(DEMO_ROWS);
 	const gridRef = useRef<OneGridHandle | null>(null);
-
-	const columns: OneGridColumn[] = useMemo(() => createBasicColumns(setRows), [setRows]);
+	const columns: OneGridColumn[] = useMemo(() => createFormatterColumns(() => {}), []);
 
 	return (
 		<div style={{ color: '#fff' }}>
 			<div style={{ marginBottom: 16 }}>
-				<h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>기본 출력</h1>
+				<h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>포매터 데모</h1>
 				<p style={{ fontSize: 13, color: '#aaa', lineHeight: 1.5, margin: 0 }}>
-					가장 기본적인 사용 예제입니다.
-					<br />
-					<code>columns</code>, <code>rows</code>, <code>rowKeyField</code> 만으로 데이터를 출력하는 방법을 보여줍니다.
+					원본 값은 그대로 두고 화면에 표시되는 값만 바꾸는 <code>formatter</code> 예제입니다.
 				</p>
 				<ul style={{ fontSize: 12, color: '#bbb', marginTop: 8, paddingLeft: 16 }}>
 					<li>
-						행 키는 <code>rowKeyField="id"</code> 를 사용합니다.
+						<code>num</code> : 1000000 → &quot;1,000,000원&quot;
 					</li>
-					<li>기본 정렬/선택/편집 기능은 최소 옵션으로 동작합니다.</li>
+					<li>
+						<code>birth</code> : &quot;2025-01-10&quot; → &quot;2025/01/10&quot;
+					</li>
 				</ul>
 			</div>
 
@@ -45,6 +44,7 @@ const BasicGridPage: React.FC = () => {
 					options={{
 						rowHeight: 35,
 						editable: false,
+						showRowNumber: true,
 						headerAlign: 'center',
 					}}
 				/>
@@ -53,4 +53,4 @@ const BasicGridPage: React.FC = () => {
 	);
 };
 
-export default BasicGridPage;
+export default FormatterDemoPage;

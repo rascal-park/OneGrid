@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { OneGridColumn } from './types';
 
 export function copySelectionToClipboard(

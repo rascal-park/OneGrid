@@ -4,12 +4,16 @@ import { Link, useLocation } from 'react-router-dom';
 const Sidebar: React.FC = () => {
 	const location = useLocation();
 
+	// Sidebar.tsx
 	const menuItems = [
 		{
 			groupLabel: '그리드 기본',
 			children: [
 				{ label: '기본 출력', to: '/basic' },
-				// 나중에 예: { label: '행 선택', to: '/selection' }
+				{ label: '렌더러', to: '/renderer' },
+				{ label: '에디터', to: '/editor' },
+				{ label: '포매터', to: '/formatter' },
+				{ label: '옵션', to: '/options' },
 			],
 		},
 	];

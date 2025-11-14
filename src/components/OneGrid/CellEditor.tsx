@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef } from 'react';
-import type { OneGridColumn } from './types';
+import type { OneGridColumn } from '../../types/types';
 
 interface CellEditorProps {
 	column: OneGridColumn;

@@ -81,7 +81,7 @@ export interface OneGridColumn {
 	renderCell?: (params: OneGridRenderParams) => React.ReactNode;
 	editor?: OneGridEditorConfig;
 	align?: 'left' | 'center' | 'right';
-	filterType?: 'text' | 'number' | 'select';
+	filterable?: boolean;
 	filterOptions?: { value: any; label: string }[];
 }
 
@@ -97,6 +97,7 @@ export interface OneGridOptions {
 	enableColumnReorder?: boolean;
 	enableColumnResize?: boolean;
 	enableHeaderFilter?: boolean;
+	showCheckBox?: boolean;
 }
 
 export interface OneGridProps {
