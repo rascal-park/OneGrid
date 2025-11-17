@@ -721,7 +721,7 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 						>
 							{effectiveColumns.map((col, colIdx) => {
 								const isLastCol = colIdx === effectiveColumns.length - 1;
-								let cellStyle = getCellStyle(col, colIdx, isLastCol, flexCount);
+								let cellStyle = getCellStyle(col, isLastCol, flexCount);
 
 								const isSorted = sortState?.field === col.field;
 
@@ -1098,7 +1098,7 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 									>
 										{effectiveColumns.map((col, colIndex) => {
 											const isLastCol = colIndex === effectiveColumns.length - 1;
-											let cellStyle = getCellStyle(col, colIndex, isLastCol, flexCount);
+											let cellStyle = getCellStyle(col, isLastCol, flexCount);
 
 											const overrideWidth = columnWidths[col.field];
 											if (overrideWidth != null) {

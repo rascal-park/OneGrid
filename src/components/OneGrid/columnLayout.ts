@@ -33,7 +33,6 @@ export function getFlexCount(effectiveCols: OneGridColumn[]): number {
 // 각 셀에 적용할 스타일 계산
 export function getCellStyle(
 	col: OneGridColumn,
-	colIdx: number,
 	isLastCol: boolean,
 	flexCount: number, // firstFlexIndex 대신 flexCount 사용
 ): React.CSSProperties {
