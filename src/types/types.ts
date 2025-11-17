@@ -105,6 +105,7 @@ export interface OneGridProps {
 	rows: any[];
 	rowKeyField?: string;
 	height?: number | string;
+	width?: number | string;
 	options?: OneGridOptions;
 	onRowsChange?: (nextRows: any[]) => void;
 }

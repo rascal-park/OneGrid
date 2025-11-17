@@ -50,6 +50,7 @@ const OptionsDemoPage: React.FC = () => {
 					rows={rows}
 					rowKeyField="id"
 					height={500}
+					width={'100%'}
 					options={{
 						rowHeight: 35,
 						editable: true,

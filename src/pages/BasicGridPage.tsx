@@ -41,6 +41,7 @@ const BasicGridPage: React.FC = () => {
 					columns={columns}
 					rows={rows}
 					rowKeyField="id"
+					width={'100%'}
 					height={400}
 					options={{
 						rowHeight: 35,

@@ -55,7 +55,6 @@ export function createBaseColumns(setRows: React.Dispatch<React.SetStateAction<a
 		{
 			field: 'birth',
 			headerName: '생년월일(date)',
-			width: 140,
 			sortable: true,
 			align: 'center',
 			renderer: { type: 'text' },
@@ -65,7 +64,6 @@ export function createBaseColumns(setRows: React.Dispatch<React.SetStateAction<a
 		{
 			field: 'active',
 			headerName: '사용여부(checkbox)',
-			width: 150,
 			align: 'center',
 			renderer: {
 				type: 'checkbox',

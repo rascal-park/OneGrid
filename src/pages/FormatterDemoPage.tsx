@@ -41,6 +41,7 @@ const FormatterDemoPage: React.FC = () => {
 					rows={rows}
 					rowKeyField="id"
 					height={400}
+					width={'100%'}
 					options={{
 						rowHeight: 35,
 						editable: false,

@@ -2,7 +2,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, use
 
 import type { CellCoord, OneGridColumn, OneGridHandle, OneGridOptions, OneGridProps } from '../../types/types';
 
-import { filterHiddenColumns, getCellStyle, getFirstFlexIndex, injectRowNumberColumn } from './columnLayout';
+import { filterHiddenColumns, getCellStyle, getFlexCount, injectRowNumberColumn } from './columnLayout';
 
 import { copySelectionToClipboard, pasteFromClipboard } from '../../types/utilsClipboard';
 import { cloneRows, rowsEqual } from '../../types/utilsHistory';
@@ -21,7 +21,7 @@ const bodyBgB = '#252525';
 const border = '#444';
 
 const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
-	({ columns, rows, rowKeyField = 'id', height = 300, options, onRowsChange }: OneGridProps, ref) => {
+	({ columns, rows, rowKeyField = 'id', height = 300, width, options, onRowsChange }: OneGridProps, ref) => {
 		const {
 			rowHeight: optRowHeight = 32,
 			editable: optEditable = true,
@@ -40,6 +40,8 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 		const rowHeight = optRowHeight;
 		const editableGrid = optEditable;
 		const showRowNumber = optShowRowNumber;
+
+		const defaultColWidth = 100; // width 없는 컬럼 기본 폭
 
 		const overflowX = scroll?.x ?? 'auto';
 		const overflowY = scroll?.y ?? 'auto';
@@ -187,9 +189,27 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			return filterHiddenColumns(injected);
 		}, [orderedBaseColumns, showRowNumber, showCheckBox]);
 
-		// flex 규칙 기준이 되는 "width 없는 첫 번째 컬럼 인덱스"
-		const firstFlexIndex = useMemo(() => {
-			return getFirstFlexIndex(effectiveColumns);
+		const totalContentWidth = useMemo(() => {
+			return effectiveColumns.reduce((sum, col) => {
+				const overrideWidth = columnWidths[col.field];
+				// 체크박스/rowNum 도 width 없으면 기본값 사용
+				const w =
+					overrideWidth ??
+					(typeof col.width === 'number'
+						? col.width
+						: col.field === '__rowCheck__'
+						? 32
+						: col.field === '__rowNum__'
+						? col.width ?? 50
+						: defaultColWidth);
+
+				return sum + w;
+			}, 0);
+		}, [effectiveColumns, columnWidths]);
+
+		// flex 대상 컬럼 개수 (width 없는 컬럼 수)
+		const flexCount = useMemo(() => {
+			return getFlexCount(effectiveColumns);
 		}, [effectiveColumns]);
 
 		// === 필터 적용 ===
@@ -658,6 +678,7 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 					color: '#fff',
 					fontSize: 12,
 					height,
+					width: width ?? 'fit-content', // <= width 없으면 내용폭만큼만
 					overflow: 'hidden',
 					borderRadius: 4,
 				}}
@@ -673,494 +694,505 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 						position: 'relative',
 					}}
 				>
-					{/* HEADER */}
+					{/* 실제 그리드 내용 래퍼: 컬럼 폭 합 만큼 최소 너비 확보 */}
 					<div
 						style={{
-							display: 'flex',
-							minWidth: 0,
-							width: '100%',
-							backgroundColor: headerBg,
-							borderBottom: `1px solid ${border}`,
-							height: headerHeight,
-							fontWeight: 600,
-							position: 'sticky',
-							top: 0,
-							zIndex: 2,
+							display: 'inline-block',
+							minWidth: totalContentWidth,
+							// width prop 이 숫자/문자열로 들어오면 그 값까지 늘어남
+							// (width 미지정이면 내용 폭 기준)
+							width: typeof width !== 'undefined' ? '100%' : undefined,
 						}}
 					>
-						{effectiveColumns.map((col, colIdx) => {
-							const isLastCol = colIdx === effectiveColumns.length - 1;
-							let cellStyle = getCellStyle(col, colIdx, isLastCol, firstFlexIndex);
+						{/* HEADER */}
+						<div
+							style={{
+								display: 'flex',
+								minWidth: 0,
+								//width: '100%',
+								backgroundColor: headerBg,
+								borderBottom: `1px solid ${border}`,
+								height: headerHeight,
+								fontWeight: 600,
+								position: 'sticky',
+								top: 0,
+								zIndex: 2,
+							}}
+						>
+							{effectiveColumns.map((col, colIdx) => {
+								const isLastCol = colIdx === effectiveColumns.length - 1;
+								let cellStyle = getCellStyle(col, colIdx, isLastCol, flexCount);
 
-							const isSorted = sortState?.field === col.field;
+								const isSorted = sortState?.field === col.field;
 
-							const overrideWidth = columnWidths[col.field];
-							if (overrideWidth != null) {
-								cellStyle = {
-									...cellStyle,
-									width: overrideWidth,
-									minWidth: overrideWidth,
-									flex: '0 0 auto',
-								};
-							}
-
-							const isCheckCol = col.field === '__rowCheck__';
-							const isRowNumCol = col.field === '__rowNum__';
-
-							const isDraggable = enableColumnReorder && !isRowNumCol && !isCheckCol;
-							const canResize = enableColumnResize && !isRowNumCol && !isCheckCol;
-
-							// 필터 가능한 컬럼 여부 (여기서는 select만)
-							const isFilterable = enableHeaderFilter && col.filterable && !isRowNumCol && !isCheckCol;
-							const selectedValues: any[] = Array.isArray(columnFilters[col.field]) ? columnFilters[col.field] : [];
-
-							// 이 컬럼용 옵션 목록
-							const baseOptions =
-								(col.filterOptions as { value: any; label: string }[] | undefined) ??
-								getDistinctOptions(internalRows, col.field);
-
-							// 검색어 적용된 옵션 목록
-							const visibleOptions = baseOptions.filter(opt =>
-								opt.label.toLowerCase().includes(filterSearch.toLowerCase()),
-							);
-
-							const allVisibleRowKeys = displayRows
-								.map(r => getRowKey(r))
-								.filter((k): k is string | number => k !== undefined);
-
-							const allChecked = allVisibleRowKeys.length > 0 && allVisibleRowKeys.every(k => checkedRowKeys.has(k));
-
-							return (
-								<div
-									key={col.field}
-									draggable={isDraggable}
-									onDragStart={e => {
-										if (!isDraggable) return;
-										setDragColField(col.field);
-										e.dataTransfer?.setData('text/plain', col.field);
-									}}
-									onDragOver={e => {
-										if (!isDraggable || !dragColField || isCheckCol || isRowNumCol) return;
-										e.preventDefault();
-									}}
-									onDrop={() => {
-										if (!isDraggable || !dragColField || dragColField === col.field) {
-											setDragColField(null);
-											return;
-										}
-										setColumnOrder(prev => {
-											if (!prev) return prev;
-											const from = prev.indexOf(dragColField);
-											const to = prev.indexOf(col.field);
-											if (from < 0 || to < 0) return prev;
-
-											const next = [...prev];
-											next.splice(from, 1);
-											next.splice(to, 0, dragColField);
-											return next;
-										});
-										setDragColField(null);
-									}}
-									style={{
+								const overrideWidth = columnWidths[col.field];
+								if (overrideWidth != null) {
+									cellStyle = {
 										...cellStyle,
-										borderRight: isLastCol ? 'none' : `1px solid ${border}`,
-										backgroundColor: headerBg,
-										fontWeight: 600,
-										userSelect: 'none',
-										display: 'flex',
-										alignItems: 'center',
-										position: 'relative', // 필터 팝업/리사이즈 핸들용
-										padding: '0 4px',
-										boxSizing: 'border-box',
-										overflow: 'visible',
-									}}
-								>
-									{isCheckCol ? (
-										<div
-											style={{
-												flex: 1,
-												display: 'flex',
-												alignItems: 'center',
-												justifyContent: 'center',
-											}}
-										>
-											<input
-												type="checkbox"
-												checked={allChecked}
-												onChange={e => {
-													const checked = e.target.checked;
-													setCheckedRowKeys(prev => {
-														const next = new Set(prev);
-														if (checked) {
-															// 현재 보이는 행들 전부 추가
-															allVisibleRowKeys.forEach(k => next.add(k));
-														} else {
-															// 현재 보이는 행들만 제거
-															allVisibleRowKeys.forEach(k => next.delete(k));
-														}
-														return next;
-													});
-												}}
-												style={{ margin: 0 }}
-											/>
-										</div>
-									) : (
-										<>
-											{/* 헤더 텍스트 + 정렬 */}
+										width: overrideWidth,
+										minWidth: overrideWidth,
+										flex: '0 0 auto',
+									};
+								}
+
+								const isCheckCol = col.field === '__rowCheck__';
+								const isRowNumCol = col.field === '__rowNum__';
+
+								const isDraggable = enableColumnReorder && !isRowNumCol && !isCheckCol;
+								const canResize = enableColumnResize && !isRowNumCol && !isCheckCol;
+
+								// 필터 가능한 컬럼 여부 (여기서는 select만)
+								const isFilterable = enableHeaderFilter && col.filterable && !isRowNumCol && !isCheckCol;
+								const selectedValues: any[] = Array.isArray(columnFilters[col.field]) ? columnFilters[col.field] : [];
+
+								// 이 컬럼용 옵션 목록
+								const baseOptions =
+									(col.filterOptions as { value: any; label: string }[] | undefined) ??
+									getDistinctOptions(internalRows, col.field);
+
+								// 검색어 적용된 옵션 목록
+								const visibleOptions = baseOptions.filter(opt =>
+									opt.label.toLowerCase().includes(filterSearch.toLowerCase()),
+								);
+
+								const allVisibleRowKeys = displayRows
+									.map(r => getRowKey(r))
+									.filter((k): k is string | number => k !== undefined);
+
+								const allChecked = allVisibleRowKeys.length > 0 && allVisibleRowKeys.every(k => checkedRowKeys.has(k));
+
+								return (
+									<div
+										key={col.field}
+										draggable={isDraggable}
+										onDragStart={e => {
+											if (!isDraggable) return;
+											setDragColField(col.field);
+											e.dataTransfer?.setData('text/plain', col.field);
+										}}
+										onDragOver={e => {
+											if (!isDraggable || !dragColField || isCheckCol || isRowNumCol) return;
+											e.preventDefault();
+										}}
+										onDrop={() => {
+											if (!isDraggable || !dragColField || dragColField === col.field) {
+												setDragColField(null);
+												return;
+											}
+											setColumnOrder(prev => {
+												if (!prev) return prev;
+												const from = prev.indexOf(dragColField);
+												const to = prev.indexOf(col.field);
+												if (from < 0 || to < 0) return prev;
+
+												const next = [...prev];
+												next.splice(from, 1);
+												next.splice(to, 0, dragColField);
+												return next;
+											});
+											setDragColField(null);
+										}}
+										style={{
+											...cellStyle,
+											borderRight: isLastCol ? 'none' : `1px solid ${border}`,
+											backgroundColor: headerBg,
+											fontWeight: 600,
+											userSelect: 'none',
+											display: 'flex',
+											alignItems: 'center',
+											position: 'relative', // 필터 팝업/리사이즈 핸들용
+											padding: '0 4px',
+											boxSizing: 'border-box',
+											overflow: 'visible',
+										}}
+									>
+										{isCheckCol ? (
 											<div
 												style={{
 													flex: 1,
 													display: 'flex',
 													alignItems: 'center',
-													justifyContent: headerJustify,
-													textAlign: headerAlign,
-													gap: 4,
-													cursor: col.sortable ? 'pointer' : 'default',
-													paddingRight: canResize ? 4 : 0,
-													fontSize: 12,
-												}}
-												onClick={() => {
-													if (!col.sortable) return;
-													handleHeaderClick(col);
+													justifyContent: 'center',
 												}}
 											>
-												<span>{col.headerName}</span>
-												{isSorted && (
-													<span
-														style={{
-															fontSize: 10,
-															color: '#aaa',
-															lineHeight: 1,
-														}}
-													>
-														{sortState?.direction === 'asc' ? '▲' : '▼'}
-													</span>
-												)}
-											</div>
-
-											{/* 필터 아이콘 */}
-											{isFilterable && (
-												<div
-													onClick={e => {
-														e.stopPropagation();
-														setOpenFilterField(prev => (prev === col.field ? null : col.field));
-														setFilterSearch('');
+												<input
+													type="checkbox"
+													checked={allChecked}
+													onChange={e => {
+														const checked = e.target.checked;
+														setCheckedRowKeys(prev => {
+															const next = new Set(prev);
+															if (checked) {
+																// 현재 보이는 행들 전부 추가
+																allVisibleRowKeys.forEach(k => next.add(k));
+															} else {
+																// 현재 보이는 행들만 제거
+																allVisibleRowKeys.forEach(k => next.delete(k));
+															}
+															return next;
+														});
 													}}
+													style={{ margin: 0 }}
+												/>
+											</div>
+										) : (
+											<>
+												{/* 헤더 텍스트 + 정렬 */}
+												<div
 													style={{
-														flex: '0 0 auto',
-														width: 16,
-														height: 16,
+														flex: 1,
 														display: 'flex',
 														alignItems: 'center',
-														justifyContent: 'center',
-														marginLeft: 4,
-														cursor: 'pointer',
-														fontSize: 10,
-														color: selectedValues.length > 0 ? '#4FC3F7' : '#bbb', // 선택 있으면 색 강조
+														justifyContent: headerJustify,
+														textAlign: headerAlign,
+														gap: 4,
+														cursor: col.sortable ? 'pointer' : 'default',
+														paddingRight: canResize ? 4 : 0,
+														fontSize: 12,
 													}}
-													title="필터"
+													onClick={() => {
+														if (!col.sortable) return;
+														handleHeaderClick(col);
+													}}
 												>
-													{/* 간단한 필터 아이콘 (원하면 SVG 아이콘으로 교체 가능) */}▾
+													<span>{col.headerName}</span>
+													{isSorted && (
+														<span
+															style={{
+																fontSize: 10,
+																color: '#aaa',
+																lineHeight: 1,
+															}}
+														>
+															{sortState?.direction === 'asc' ? '▲' : '▼'}
+														</span>
+													)}
 												</div>
-											)}
 
-											{/* 필터 팝업 */}
-											{isFilterable && openFilterField === col.field && (
-												<div
-													style={{
-														position: 'absolute',
-														top: headerHeight,
-														right: 0,
-														minWidth: 180,
-														maxWidth: 260,
-														backgroundColor: '#1e1e1e',
-														border: '1px solid #555',
-														borderRadius: 4,
-														boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
-														padding: 8,
-														zIndex: 999,
-													}}
-													onClick={e => e.stopPropagation()}
-												>
-													{/* 검색 인풋 */}
-													<input
-														type="text"
-														placeholder="검색"
-														value={filterSearch}
-														onChange={e => setFilterSearch(e.target.value)}
-														style={{
-															width: '100%',
-															height: 24,
-															fontSize: 11,
-															padding: '0 6px',
-															marginBottom: 6,
-															backgroundColor: '#111',
-															border: '1px solid #555',
-															color: '#fff',
-															borderRadius: 3,
-															boxSizing: 'border-box',
-														}}
-													/>
-
-													{/* 체크박스 리스트 */}
+												{/* 필터 아이콘 */}
+												{isFilterable && (
 													<div
-														style={{
-															maxHeight: 160,
-															overflowY: 'auto',
-															paddingRight: 4,
+														onClick={e => {
+															e.stopPropagation();
+															setOpenFilterField(prev => (prev === col.field ? null : col.field));
+															setFilterSearch('');
 														}}
-													>
-														{visibleOptions.length === 0 && (
-															<div style={{ fontSize: 11, color: '#888', padding: '4px 0' }}>검색 결과 없음</div>
-														)}
-														{visibleOptions.map(opt => {
-															const checked = selectedValues.includes(opt.value);
-															return (
-																<label
-																	key={String(opt.value)}
-																	style={{
-																		display: 'flex',
-																		alignItems: 'center',
-																		gap: 4,
-																		fontSize: 11,
-																		color: '#eee',
-																		marginBottom: 2,
-																		cursor: 'pointer',
-																	}}
-																>
-																	<input
-																		type="checkbox"
-																		checked={checked}
-																		onChange={e => {
-																			const checked = e.target.checked;
-																			setColumnFilters(prev => {
-																				const current: any[] = Array.isArray(prev[col.field]) ? prev[col.field] : [];
-																				let next: any[];
-																				if (checked) {
-																					next = [...current, opt.value];
-																				} else {
-																					next = current.filter(v => v !== opt.value);
-																				}
-																				return {
-																					...prev,
-																					[col.field]: next,
-																				};
-																			});
-																		}}
-																		style={{ margin: 0 }}
-																	/>
-																	<span>{opt.label}</span>
-																</label>
-															);
-														})}
-													</div>
-
-													{/* 버튼 영역 (전체해제 / 닫기 정도) */}
-													<div
 														style={{
+															flex: '0 0 auto',
+															width: 16,
+															height: 16,
 															display: 'flex',
-															justifyContent: 'space-between',
-															marginTop: 6,
-															gap: 4,
+															alignItems: 'center',
+															justifyContent: 'center',
+															marginLeft: 4,
+															cursor: 'pointer',
+															fontSize: 10,
+															color: selectedValues.length > 0 ? '#4FC3F7' : '#bbb', // 선택 있으면 색 강조
 														}}
+														title="필터"
 													>
-														<button
-															type="button"
-															onClick={() => {
-																setColumnFilters(prev => ({
-																	...prev,
-																	[col.field]: [],
-																}));
-															}}
-															style={{
-																flex: 1,
-																height: 24,
-																fontSize: 11,
-																backgroundColor: '#333',
-																color: '#fff',
-																border: '1px solid #555',
-																borderRadius: 3,
-																cursor: 'pointer',
-															}}
-														>
-															전체 해제
-														</button>
-														<button
-															type="button"
-															onClick={() => {
-																setOpenFilterField(null);
-															}}
-															style={{
-																flex: 1,
-																height: 24,
-																fontSize: 11,
-																backgroundColor: '#4FC3F7',
-																color: '#000',
-																border: '1px solid #4FC3F7',
-																borderRadius: 3,
-																cursor: 'pointer',
-															}}
-														>
-															닫기
-														</button>
+														{/* 간단한 필터 아이콘 (원하면 SVG 아이콘으로 교체 가능) */}▾
 													</div>
-												</div>
-											)}
-										</>
-									)}
+												)}
 
-									{/* 리사이즈 핸들 */}
-									{canResize && (
-										<span
-											onMouseDown={e => {
-												e.preventDefault();
-												e.stopPropagation(); // 헤더 클릭/필터 팝업 열림 막기
+												{/* 필터 팝업 */}
+												{isFilterable && openFilterField === col.field && (
+													<div
+														style={{
+															position: 'absolute',
+															top: headerHeight,
+															right: 0,
+															minWidth: 180,
+															maxWidth: 260,
+															backgroundColor: '#1e1e1e',
+															border: '1px solid #555',
+															borderRadius: 4,
+															boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
+															padding: 8,
+															zIndex: 999,
+														}}
+														onClick={e => e.stopPropagation()}
+													>
+														{/* 검색 인풋 */}
+														<input
+															type="text"
+															placeholder="검색"
+															value={filterSearch}
+															onChange={e => setFilterSearch(e.target.value)}
+															style={{
+																width: '100%',
+																height: 24,
+																fontSize: 11,
+																padding: '0 6px',
+																marginBottom: 6,
+																backgroundColor: '#111',
+																border: '1px solid #555',
+																color: '#fff',
+																borderRadius: 3,
+																boxSizing: 'border-box',
+															}}
+														/>
 
-												const baseWidth =
-													columnWidths[col.field] ??
-													(typeof cellStyle.width === 'number'
-														? cellStyle.width
-														: typeof col.width === 'number'
-														? col.width
-														: 100);
+														{/* 체크박스 리스트 */}
+														<div
+															style={{
+																maxHeight: 160,
+																overflowY: 'auto',
+																paddingRight: 4,
+															}}
+														>
+															{visibleOptions.length === 0 && (
+																<div style={{ fontSize: 11, color: '#888', padding: '4px 0' }}>검색 결과 없음</div>
+															)}
+															{visibleOptions.map(opt => {
+																const checked = selectedValues.includes(opt.value);
+																return (
+																	<label
+																		key={String(opt.value)}
+																		style={{
+																			display: 'flex',
+																			alignItems: 'center',
+																			gap: 4,
+																			fontSize: 11,
+																			color: '#eee',
+																			marginBottom: 2,
+																			cursor: 'pointer',
+																		}}
+																	>
+																		<input
+																			type="checkbox"
+																			checked={checked}
+																			onChange={e => {
+																				const checked = e.target.checked;
+																				setColumnFilters(prev => {
+																					const current: any[] = Array.isArray(prev[col.field]) ? prev[col.field] : [];
+																					let next: any[];
+																					if (checked) {
+																						next = [...current, opt.value];
+																					} else {
+																						next = current.filter(v => v !== opt.value);
+																					}
+																					return {
+																						...prev,
+																						[col.field]: next,
+																					};
+																				});
+																			}}
+																			style={{ margin: 0 }}
+																		/>
+																		<span>{opt.label}</span>
+																	</label>
+																);
+															})}
+														</div>
 
-												setResizing({
-													field: col.field,
-													startX: e.clientX,
-													startWidth: baseWidth,
-												});
-											}}
-											style={{
-												position: 'absolute',
-												right: 0,
-												top: 0,
-												width: 4,
-												height: '100%',
-												cursor: 'col-resize',
-												userSelect: 'none',
-											}}
-										/>
-									)}
-								</div>
-							);
-						})}
-					</div>
+														{/* 버튼 영역 (전체해제 / 닫기 정도) */}
+														<div
+															style={{
+																display: 'flex',
+																justifyContent: 'space-between',
+																marginTop: 6,
+																gap: 4,
+															}}
+														>
+															<button
+																type="button"
+																onClick={() => {
+																	setColumnFilters(prev => ({
+																		...prev,
+																		[col.field]: [],
+																	}));
+																}}
+																style={{
+																	flex: 1,
+																	height: 24,
+																	fontSize: 11,
+																	backgroundColor: '#333',
+																	color: '#fff',
+																	border: '1px solid #555',
+																	borderRadius: 3,
+																	cursor: 'pointer',
+																}}
+															>
+																전체 해제
+															</button>
+															<button
+																type="button"
+																onClick={() => {
+																	setOpenFilterField(null);
+																}}
+																style={{
+																	flex: 1,
+																	height: 24,
+																	fontSize: 11,
+																	backgroundColor: '#4FC3F7',
+																	color: '#000',
+																	border: '1px solid #4FC3F7',
+																	borderRadius: 3,
+																	cursor: 'pointer',
+																}}
+															>
+																닫기
+															</button>
+														</div>
+													</div>
+												)}
+											</>
+										)}
 
-					{/* BODY */}
-					<div>
-						{displayRows.map((row, rowIndex) => {
-							const rowKeyVal = getRowKey(row);
-							const zebraBg = rowIndex % 2 === 0 ? bodyBgA : bodyBgB;
+										{/* 리사이즈 핸들 */}
+										{canResize && (
+											<span
+												onMouseDown={e => {
+													e.preventDefault();
+													e.stopPropagation(); // 헤더 클릭/필터 팝업 열림 막기
 
-							return (
-								<div
-									key={rowKeyVal ?? rowIndex}
-									style={{
-										display: 'flex',
-										minWidth: 0,
-										width: '100%',
-										borderBottom: '1px solid #333',
-										backgroundColor: zebraBg,
-										height: rowHeight,
-										lineHeight: `${rowHeight}px`,
-									}}
-								>
-									{effectiveColumns.map((col, colIndex) => {
-										const isLastCol = colIndex === effectiveColumns.length - 1;
-										let cellStyle = getCellStyle(col, colIndex, isLastCol, firstFlexIndex);
+													const baseWidth =
+														columnWidths[col.field] ??
+														(typeof cellStyle.width === 'number'
+															? cellStyle.width
+															: typeof col.width === 'number'
+															? col.width
+															: 100);
 
-										const overrideWidth = columnWidths[col.field];
-										if (overrideWidth != null) {
-											cellStyle = {
-												...cellStyle,
-												width: overrideWidth,
-												minWidth: overrideWidth,
-												flex: '0 0 auto',
-											};
-										}
+													setResizing({
+														field: col.field,
+														startX: e.clientX,
+														startWidth: baseWidth,
+													});
+												}}
+												style={{
+													position: 'absolute',
+													right: 0,
+													top: 0,
+													width: 4,
+													height: '100%',
+													cursor: 'col-resize',
+													userSelect: 'none',
+												}}
+											/>
+										)}
+									</div>
+								);
+							})}
+						</div>
 
-										const coordKey = `${rowKeyVal}::${col.field}`;
-										const isSelected = selectedCells.has(coordKey);
+						{/* BODY */}
+						<div>
+							{displayRows.map((row, rowIndex) => {
+								const rowKeyVal = getRowKey(row);
+								const zebraBg = rowIndex % 2 === 0 ? bodyBgA : bodyBgB;
 
-										const isActiveNow =
-											activeCell && activeCell.rowKey === rowKeyVal && activeCell.colField === col.field;
+								return (
+									<div
+										key={rowKeyVal ?? rowIndex}
+										style={{
+											display: 'flex',
+											minWidth: 0,
+											//width: '100%',
+											borderBottom: '1px solid #333',
+											backgroundColor: zebraBg,
+											height: rowHeight,
+											lineHeight: `${rowHeight}px`,
+										}}
+									>
+										{effectiveColumns.map((col, colIndex) => {
+											const isLastCol = colIndex === effectiveColumns.length - 1;
+											let cellStyle = getCellStyle(col, colIndex, isLastCol, flexCount);
 
-										const isEditingNow = editCell && editCell.rowKey === rowKeyVal && editCell.colField === col.field;
+											const overrideWidth = columnWidths[col.field];
+											if (overrideWidth != null) {
+												cellStyle = {
+													...cellStyle,
+													width: overrideWidth,
+													minWidth: overrideWidth,
+													flex: '0 0 auto',
+												};
+											}
 
-										const rawVal =
-											col.field === '__rowNum__'
-												? rowIndex + 1
-												: col.field === '__rowCheck__'
-												? checkedRowKeys.has(rowKeyVal!)
-												: row[col.field];
+											const coordKey = `${rowKeyVal}::${col.field}`;
+											const isSelected = selectedCells.has(coordKey);
 
-										if (col.field === '__rowCheck__') {
-											// 렌더러 강제 설정
-											col = {
-												...col,
-												renderer: {
-													type: 'checkbox',
-													props: {
-														checkValue: true,
-														uncheckValue: false,
-														onToggle: ({ row, nextValue }: any) => {
-															const key = getRowKey(row);
-															if (key === undefined) return;
-															setCheckedRowKeys(prev => {
-																const next = new Set(prev);
-																if (nextValue) next.add(key);
-																else next.delete(key);
-																return next;
-															});
+											const isActiveNow =
+												activeCell && activeCell.rowKey === rowKeyVal && activeCell.colField === col.field;
+
+											const isEditingNow = editCell && editCell.rowKey === rowKeyVal && editCell.colField === col.field;
+
+											const rawVal =
+												col.field === '__rowNum__'
+													? rowIndex + 1
+													: col.field === '__rowCheck__'
+													? checkedRowKeys.has(rowKeyVal!)
+													: row[col.field];
+
+											if (col.field === '__rowCheck__') {
+												// 렌더러 강제 설정
+												col = {
+													...col,
+													renderer: {
+														type: 'checkbox',
+														props: {
+															checkValue: true,
+															uncheckValue: false,
+															onToggle: ({ row, nextValue }: any) => {
+																const key = getRowKey(row);
+																if (key === undefined) return;
+																setCheckedRowKeys(prev => {
+																	const next = new Set(prev);
+																	if (nextValue) next.add(key);
+																	else next.delete(key);
+																	return next;
+																});
+															},
 														},
 													},
-												},
-											};
-										}
+												};
+											}
 
-										return (
-											<div
-												key={col.field}
-												style={{
-													...cellStyle,
-													borderRight: isLastCol ? 'none' : '1px solid #333',
-													backgroundColor: isEditingNow ? '#3a3a3a' : isSelected ? '#4a4a4a' : zebraBg,
-													outline: isActiveNow ? '1px solid #888' : '1px solid transparent',
-													display: 'flex',
-													alignItems: 'center',
-													position: 'relative',
-												}}
-												onClick={e => handleCellClick(e, rowIndex, colIndex)}
-												onDoubleClick={() => handleCellDoubleClick(rowIndex, colIndex)}
-												onKeyDown={e => handleCellKeyDown(e, rowIndex, colIndex)}
-												tabIndex={0}
-											>
-												{isEditingNow ? (
-													<CellEditor
-														column={col}
-														draft={draft}
-														rowHeight={rowHeight}
-														onChangeDraft={v => setDraft(v)}
-														onCommit={commitEdit}
-														onCancel={cancelEdit}
-														onTabNav={moveEditByTab}
-													/>
-												) : (
-													<CellRenderer
-														column={col}
-														value={rawVal}
-														row={row}
-														rowIndex={rowIndex}
-														colIndex={colIndex}
-														rowHeight={rowHeight}
-													/>
-												)}
-											</div>
-										);
-									})}
-								</div>
-							);
-						})}
+											return (
+												<div
+													key={col.field}
+													style={{
+														...cellStyle,
+														borderRight: isLastCol ? 'none' : '1px solid #333',
+														backgroundColor: isEditingNow ? '#3a3a3a' : isSelected ? '#4a4a4a' : zebraBg,
+														outline: isActiveNow ? '1px solid #888' : '1px solid transparent',
+														display: 'flex',
+														alignItems: 'center',
+														position: 'relative',
+													}}
+													onClick={e => handleCellClick(e, rowIndex, colIndex)}
+													onDoubleClick={() => handleCellDoubleClick(rowIndex, colIndex)}
+													onKeyDown={e => handleCellKeyDown(e, rowIndex, colIndex)}
+													tabIndex={0}
+												>
+													{isEditingNow ? (
+														<CellEditor
+															column={col}
+															draft={draft}
+															rowHeight={rowHeight}
+															onChangeDraft={v => setDraft(v)}
+															onCommit={commitEdit}
+															onCancel={cancelEdit}
+															onTabNav={moveEditByTab}
+														/>
+													) : (
+														<CellRenderer
+															column={col}
+															value={rawVal}
+															row={row}
+															rowIndex={rowIndex}
+															colIndex={colIndex}
+															rowHeight={rowHeight}
+														/>
+													)}
+												</div>
+											);
+										})}
+									</div>
+								);
+							})}
+						</div>
 					</div>
 				</div>
 			</div>

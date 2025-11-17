@@ -53,6 +53,7 @@ const RendererDemoPage: React.FC = () => {
 					columns={columns}
 					rows={rows}
 					rowKeyField="id"
+					width={'100%'}
 					height={500}
 					options={{
 						rowHeight: 35,

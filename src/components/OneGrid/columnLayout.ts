@@ -5,9 +5,10 @@ export function injectRowNumberColumn(columns: OneGridColumn[], showRowNumber: b
 
 	const rowNumColumn: OneGridColumn = {
 		field: '__rowNum__',
-		headerName: '#',
+		headerName: 'No',
 		width: 50,
 		sortable: false,
+		align: 'center',
 		hidden: false,
 		formatter: {
 			render: ({ rowIndex }) => rowIndex + 1,
@@ -23,9 +24,10 @@ export function filterHiddenColumns(cols: OneGridColumn[]): OneGridColumn[] {
 }
 
 // flex 계산을 위해 "width 없는 첫번째 컬럼" 인덱스 구하기
-export function getFirstFlexIndex(effectiveCols: OneGridColumn[]): number {
-	const idx = effectiveCols.findIndex(c => c.width == null && !c.hidden);
-	return idx;
+export function getFlexCount(effectiveCols: OneGridColumn[]): number {
+	return effectiveCols.filter(
+		c => c.width == null && !c.hidden && c.field !== '__rowNum__' && c.field !== '__rowCheck__',
+	).length;
 }
 
 // 각 셀에 적용할 스타일 계산
@@ -33,10 +35,8 @@ export function getCellStyle(
 	col: OneGridColumn,
 	colIdx: number,
 	isLastCol: boolean,
-	firstFlexIndex: number,
+	flexCount: number, // firstFlexIndex 대신 flexCount 사용
 ): React.CSSProperties {
-	const isFirstFlex = colIdx === firstFlexIndex;
-
 	const base: React.CSSProperties = {
 		padding: '0 8px',
 		whiteSpace: 'nowrap',
@@ -46,6 +46,7 @@ export function getCellStyle(
 		minWidth: 0,
 	};
 
+	// 행 번호 컬럼은 항상 고정 폭
 	if (col.field === '__rowNum__') {
 		const w = col.width ?? 50;
 		return {
@@ -55,7 +56,17 @@ export function getCellStyle(
 		};
 	}
 
-	// 고정폭
+	// 체크박스 컬럼도 항상 고정 폭
+	if (col.field === '__rowCheck__') {
+		const w = col.width ?? 32;
+		return {
+			...base,
+			flex: '0 0 auto',
+			width: w,
+		};
+	}
+
+	// width 지정된 컬럼은 고정 폭
 	if (col.width != null) {
 		return {
 			...base,
@@ -64,15 +75,15 @@ export function getCellStyle(
 		};
 	}
 
-	// 첫 번째 flex 대상
-	if (isFirstFlex) {
+	// width 없는 컬럼들 → 전부 flex로 남는 폭 나눠먹기
+	if (flexCount > 0) {
 		return {
 			...base,
-			flex: '1 1 auto',
+			flex: '1 1 0', // basis 0으로 두면 균등 분배
 		};
 	}
 
-	// 나머지 auto 컬럼
+	// fallback
 	return {
 		...base,
 		flex: '0 1 auto',
