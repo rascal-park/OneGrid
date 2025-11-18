@@ -1,10 +1,12 @@
+// src/layout/Sidebar.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTheme } from '../theme/ThemeContext';
 
 const Sidebar: React.FC = () => {
 	const location = useLocation();
+	const { theme, toggleTheme } = useTheme();
 
-	// Sidebar.tsx
 	const menuItems = [
 		{
 			groupLabel: '그리드 기본',
@@ -23,20 +25,31 @@ const Sidebar: React.FC = () => {
 		<aside
 			style={{
 				width: 220,
-				backgroundColor: '#2a2a2a',
-				borderRight: '1px solid #444',
+				backgroundColor: 'var(--sidebar-bg)',
+				borderRight: '1px solid var(--sidebar-border)',
 				display: 'flex',
 				flexDirection: 'column',
-				padding: '16px',
+				padding: '16px 14px',
+				boxSizing: 'border-box',
+				color: 'var(--sidebar-fg)',
 			}}
 		>
-			<div style={{ fontWeight: 600, marginBottom: '16px', fontSize: 14, color: '#fff' }}>OneGrid Docs</div>
+			<div style={{ fontWeight: 600, marginBottom: 16, fontSize: 14 }}>OneGrid Docs</div>
 
-			<nav style={{ fontSize: 13, color: '#ccc' }}>
+			<nav style={{ fontSize: 13 }}>
 				{menuItems.map((group, gi) => (
-					<div key={gi} style={{ marginBottom: '16px' }}>
-						<div style={{ color: '#999', fontSize: 12, fontWeight: 600, marginBottom: '8px' }}>{group.groupLabel}</div>
-						<div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+					<div key={gi} style={{ marginBottom: 16 }}>
+						<div
+							style={{
+								color: 'var(--muted)',
+								fontSize: 12,
+								fontWeight: 600,
+								marginBottom: 8,
+							}}
+						>
+							{group.groupLabel}
+						</div>
+						<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
 							{group.children.map(item => {
 								const active = location.pathname === item.to;
 								return (
@@ -45,9 +58,9 @@ const Sidebar: React.FC = () => {
 										to={item.to}
 										style={{
 											textDecoration: 'none',
-											color: active ? '#fff' : '#aaa',
-											backgroundColor: active ? '#3a3a3a' : 'transparent',
-											border: active ? '1px solid #666' : '1px solid transparent',
+											color: active ? 'var(--sidebar-fg)' : '#aaaaaa',
+											backgroundColor: active ? 'rgba(255,255,255,0.06)' : 'transparent',
+											border: active ? '1px solid rgba(255,255,255,0.12)' : '1px solid transparent',
 											borderRadius: 4,
 											padding: '6px 8px',
 											fontWeight: active ? 600 : 400,
@@ -64,9 +77,36 @@ const Sidebar: React.FC = () => {
 				))}
 			</nav>
 
-			<div style={{ marginTop: 'auto', fontSize: 11, color: '#555' }}>
-				<div style={{ color: '#777' }}>v0.0.1</div>
-				<div style={{ color: '#555' }}>© OneGrid</div>
+			<div
+				style={{
+					marginTop: 'auto',
+					fontSize: 11,
+					color: 'var(--muted)',
+					display: 'flex',
+					flexDirection: 'column',
+					gap: 8,
+				}}
+			>
+				<button
+					type="button"
+					onClick={toggleTheme}
+					style={{
+						width: '100%',
+						display: 'inline-flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						gap: 6,
+						fontSize: 12,
+						padding: '6px 8px',
+					}}
+				>
+					{theme === 'dark' ? '☀ 라이트 모드' : '🌙 다크 모드'}
+				</button>
+
+				<div>
+					<div style={{ color: 'var(--muted)' }}>v0.0.1</div>
+					<div style={{ color: 'var(--muted)' }}>© OneGrid</div>
+				</div>
 			</div>
 		</aside>
 	);

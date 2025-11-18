@@ -1,4 +1,3 @@
-// src/pages/OptionsDemoPage.tsx
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
 import { createOptionsColumns } from '../types/demoColumns';
@@ -11,13 +10,13 @@ const OptionsDemoPage: React.FC = () => {
 	const columns: OneGridColumn[] = useMemo(() => createOptionsColumns(setRows), [setRows]);
 
 	return (
-		<div style={{ color: '#fff' }}>
-			<div style={{ marginBottom: 16 }}>
-				<h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>옵션 데모</h1>
-				<p style={{ fontSize: 13, color: '#aaa', lineHeight: 1.5, margin: 0 }}>
+		<div className="docs-main">
+			<section className="docs-section-header">
+				<h1 className="docs-section-title">옵션 데모</h1>
+				<p className="docs-section-desc">
 					열 이동 / 열 너비 조절 / 헤더 필터 / 행 번호 / 체크박스 선택 등의 옵션을 한 곳에서 보여줍니다.
 				</p>
-				<ul style={{ fontSize: 12, color: '#bbb', marginTop: 8, paddingLeft: 16 }}>
+				<ul className="docs-section-bullets">
 					<li>
 						<code>enableColumnReorder</code> – 헤더 드래그로 열 순서 변경
 					</li>
@@ -34,16 +33,9 @@ const OptionsDemoPage: React.FC = () => {
 						<code>showCheckBox</code> – 좌측에 행 선택 체크박스 컬럼 추가
 					</li>
 				</ul>
-			</div>
+			</section>
 
-			<div
-				style={{
-					backgroundColor: '#2a2a2a',
-					border: '1px solid #444',
-					borderRadius: 6,
-					padding: 16,
-				}}
-			>
+			<section className="docs-panel">
 				<OneGrid
 					ref={gridRef}
 					columns={columns}
@@ -63,7 +55,7 @@ const OptionsDemoPage: React.FC = () => {
 					}}
 					onRowsChange={setRows}
 				/>
-			</div>
+			</section>
 		</div>
 	);
 };

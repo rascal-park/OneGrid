@@ -64,7 +64,7 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 						style={{
 							display: 'flex',
 							minWidth: 0,
-							borderBottom: '1px solid #333',
+							borderBottom: '1px solid var(--grid-border)',
 							backgroundColor: zebraBg,
 							height: rowHeight,
 							lineHeight: `${rowHeight}px`,
@@ -128,8 +128,12 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 									key={col.field}
 									style={{
 										...cellStyle,
-										borderRight: '1px solid #333',
-										backgroundColor: isEditingNow ? '#3a3a3a' : isSelected ? '#4a4a4a' : zebraBg,
+										borderRight: '1px solid var(--grid-border)',
+										backgroundColor: isEditingNow
+											? 'var(--grid-edit-bg)'
+											: isSelected
+											? 'var(--grid-selected-bg)'
+											: zebraBg,
 										outline: isActiveNow ? '1px solid #888' : '1px solid transparent',
 										display: 'flex',
 										alignItems: 'center',

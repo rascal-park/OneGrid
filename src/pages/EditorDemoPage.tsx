@@ -1,4 +1,3 @@
-// src/pages/EditorDemoPage.tsx
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
 import { createEditorColumns } from '../types/demoColumns';
@@ -11,13 +10,13 @@ const EditorDemoPage: React.FC = () => {
 	const columns: OneGridColumn[] = useMemo(() => createEditorColumns(setRows), [setRows]);
 
 	return (
-		<div style={{ color: '#fff' }}>
-			<div style={{ marginBottom: 16 }}>
-				<h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>에디터 데모</h1>
-				<p style={{ fontSize: 13, color: '#aaa', lineHeight: 1.5, margin: 0 }}>
+		<div className="docs-main">
+			<section className="docs-section-header">
+				<h1 className="docs-section-title">에디터 데모</h1>
+				<p className="docs-section-desc">
 					셀 편집 시 사용되는 <code>editor</code> 예제입니다.
 				</p>
-				<ul style={{ fontSize: 12, color: '#bbb', marginTop: 8, paddingLeft: 16 }}>
+				<ul className="docs-section-bullets">
 					<li>
 						<code>type: 'text'</code> – 기본 텍스트 입력
 					</li>
@@ -34,16 +33,9 @@ const EditorDemoPage: React.FC = () => {
 						<code>type: 'combo'</code> – 입력 + datalist 조합
 					</li>
 				</ul>
-			</div>
+			</section>
 
-			<div
-				style={{
-					backgroundColor: '#2a2a2a',
-					border: '1px solid #444',
-					borderRadius: 6,
-					padding: 16,
-				}}
-			>
+			<section className="docs-panel">
 				<OneGrid
 					ref={gridRef}
 					columns={columns}
@@ -59,7 +51,7 @@ const EditorDemoPage: React.FC = () => {
 					}}
 					onRowsChange={setRows}
 				/>
-			</div>
+			</section>
 		</div>
 	);
 };

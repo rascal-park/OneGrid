@@ -22,6 +22,7 @@ export default defineConfig([
 		rules: {
 			// any 허용
 			'@typescript-eslint/no-explicit-any': 'off',
+			'react-refresh/only-export-components': 'off',
 
 			// JS 기본 no-unused-vars 끄기 (TS 버전이 대신함)
 			'no-unused-vars': 'off',

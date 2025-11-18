@@ -1,9 +1,10 @@
+// src/components/OneGrid/OneGridHeader.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { OneGridColumn } from '../../types/types';
 import type { SortState } from '../../types/utilsSort';
 import { getCellStyle } from './columnLayout';
 
-const border = '#444';
+const border = 'var(--grid-border)';
 
 /** 그룹 헤더용 내부 타입 */
 interface HeaderGroupCell {
@@ -255,7 +256,7 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 				borderBottom: `1px solid ${border}`,
 				height: headerRowHeight * headerDepth,
 				minWidth: 0,
-				overflow: 'hidden',
+				overflow: 'visible',
 			}}
 		>
 			{/* === leaf 헤더 줄 (맨 아래 1줄) : flex 레이아웃 → 바디와 폭 100% 동일 === */}
@@ -267,7 +268,7 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 					right: 0,
 					height: headerRowHeight,
 					display: 'flex',
-					zIndex: 1,
+					zIndex: 2, // leaf 줄이 overlay 위
 				}}
 			>
 				{effectiveColumns.map((col, colIdx) => {
@@ -299,7 +300,6 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 					const selectedValues: any[] = Array.isArray(columnFilters[col.field]) ? columnFilters[col.field] : [];
 
 					const baseOptions = getBaseFilterOptions(col);
-
 					const visibleOptions = baseOptions.filter(opt =>
 						opt.label.toLowerCase().includes(filterSearch.toLowerCase()),
 					);
@@ -347,7 +347,8 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 							style={{
 								...cellStyle,
 								borderRight: `1px solid ${border}`,
-								backgroundColor: headerBg,
+								// rowSpan 대상(그룹에 속하지 않은 leaf)은 오버레이에서만 텍스트/배경 그리도록 투명 처리
+								backgroundColor: headerDepth > 1 && !isGroupedLeaf && !isCheckCol ? 'transparent' : headerBg,
 								fontWeight: 600,
 								userSelect: 'none',
 								display: 'flex',
@@ -358,9 +359,8 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 								overflow: 'visible',
 							}}
 						>
-							{/* leaf 줄 자체에는 "그룹에 속한 컬럼"만 텍스트를 그린다.
-							    그룹에 안 속한 컬럼(No, 지역 등)은 오버레이(rowSpan 셀)가 대신 그리기 때문에 여기서는 비워둠 */}
 							{isCheckCol ? (
+								// === 헤더 체크박스 (rowSpan 안 쓰고 그대로 leaf 줄에서만 노출) ===
 								<div
 									style={{
 										flex: 1,
@@ -371,6 +371,7 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 								>
 									<input
 										type="checkbox"
+										name="onegrid-select-all"
 										checked={allChecked}
 										onChange={e => {
 											const checked = e.target.checked;
@@ -387,9 +388,9 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 										style={{ margin: 0 }}
 									/>
 								</div>
-							) : isGroupedLeaf ? (
+							) : headerDepth > 1 && !isGroupedLeaf ? null : ( // 오버레이에서 rowSpan으로 한 번만 텍스트를 그리므로 여기선 내용 없음 // 그룹에 속하지 않은 leaf (No / 지역 / rowNum 등) 은
 								<>
-									{/* 그룹에 속한 leaf 컬럼만 하단 1줄에 텍스트 표시 */}
+									{/* 헤더 텍스트 + 정렬 */}
 									<div
 										style={{
 											flex: 1,
@@ -412,7 +413,7 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 											<span
 												style={{
 													fontSize: 10,
-													color: '#aaa',
+													color: 'var(--fg)',
 													lineHeight: 1,
 												}}
 											>
@@ -456,8 +457,8 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 												right: 0,
 												minWidth: 180,
 												maxWidth: 260,
-												backgroundColor: '#1e1e1e',
-												border: '1px solid #555',
+												backgroundColor: 'var(--panel-bg)',
+												border: `1px solid var(--panel-border)`,
 												borderRadius: 4,
 												boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
 												padding: 8,
@@ -467,6 +468,7 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 										>
 											<input
 												type="text"
+												name={`onegrid-filter-search-${col.field}`}
 												placeholder="검색"
 												value={filterSearch}
 												onChange={e => setFilterSearch(e.target.value)}
@@ -476,9 +478,9 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 													fontSize: 11,
 													padding: '0 6px',
 													marginBottom: 6,
-													backgroundColor: '#111',
-													border: '1px solid #555',
-													color: '#fff',
+													backgroundColor: 'var(--bg)',
+													border: `1px solid var(--panel-border)`,
+													color: 'var(--fg)',
 													borderRadius: 3,
 													boxSizing: 'border-box',
 												}}
@@ -495,7 +497,7 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 													<div
 														style={{
 															fontSize: 11,
-															color: '#888',
+															color: 'var(--fg)',
 															padding: '4px 0',
 														}}
 													>
@@ -512,13 +514,14 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 																alignItems: 'center',
 																gap: 4,
 																fontSize: 11,
-																color: '#eee',
+																color: 'var(--fg)',
 																marginBottom: 2,
 																cursor: 'pointer',
 															}}
 														>
 															<input
 																type="checkbox"
+																name={`onegrid-filter-${col.field}`}
 																checked={checked}
 																onChange={e => {
 																	const nextChecked = e.target.checked;
@@ -548,8 +551,8 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 												style={{
 													display: 'flex',
 													justifyContent: 'space-between',
-													marginTop: 6,
-													gap: 4,
+													marginTop: 8,
+													gap: 5,
 												}}
 											>
 												<button
@@ -562,7 +565,7 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 													}}
 													style={{
 														flex: 1,
-														height: 24,
+														height: 30,
 														fontSize: 11,
 														backgroundColor: '#333',
 														color: '#fff',
@@ -580,7 +583,7 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 													}}
 													style={{
 														flex: 1,
-														height: 24,
+														height: 30,
 														fontSize: 11,
 														backgroundColor: '#4FC3F7',
 														color: '#000',
@@ -595,7 +598,7 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 										</div>
 									)}
 								</>
-							) : null}
+							)}
 
 							{/* 리사이즈 핸들 */}
 							{canResize && (
@@ -634,8 +637,8 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 				})}
 			</div>
 
-			{/* === 오버레이 계층 : 그룹 헤더 + rowSpan 헤더(No, 지역 등) === */}
-			{leafMetrics.length === effectiveColumns.length && (
+			{/* === 오버레이 계층 : 그룹 헤더 + rowSpan 헤더(No, 지역, rowNum 등) === */}
+			{headerDepth > 1 && leafMetrics.length === effectiveColumns.length && (
 				<div
 					style={{
 						position: 'absolute',
@@ -643,11 +646,11 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 						left: 0,
 						right: 0,
 						height: headerRowHeight * headerDepth,
-						zIndex: 2,
-						pointerEvents: 'none', // 오버레이가 클릭 막지 않게
+						zIndex: 1, // leaf 줄보다 아래 (필터 팝업 안 가리게)
+						pointerEvents: 'none',
 					}}
 				>
-					{/* 그룹 헤더 (2022년 / 1분기 / 2분기 ... ) */}
+					{/* 그룹 헤더 */}
 					{groupLevels.map((cells, levelIdx) => {
 						const top = headerRowHeight * levelIdx;
 						return (
@@ -696,12 +699,11 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 						);
 					})}
 
-					{/* 그룹에 속하지 않은 leaf 컬럼 → 전체 높이 rowSpan 헤더 (No, 지역) */}
+					{/* 그룹에 속하지 않은 leaf 컬럼 → 전체 높이 rowSpan 헤더 (No, 지역, rowNum 등) */}
 					{effectiveColumns.map((col, idx) => {
 						const isGroupedLeaf = leafGroupedMap.get(col.field) ?? false;
-						if (isGroupedLeaf) return null; // 그룹에 속한 것은 위/아래 줄로 처리
+						if (isGroupedLeaf) return null;
 
-						//const isLastCol = idx === effectiveColumns.length - 1;
 						const metric = leafMetrics[idx];
 						if (!metric) return null;
 

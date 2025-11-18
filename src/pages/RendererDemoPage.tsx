@@ -1,4 +1,3 @@
-// src/pages/RendererDemoPage.tsx
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
 import { createRendererColumns } from '../types/demoColumns';
@@ -12,13 +11,13 @@ const RendererDemoPage: React.FC = () => {
 	const columns: OneGridColumn[] = useMemo(() => createRendererColumns(setRows), [setRows]);
 
 	return (
-		<div style={{ color: '#fff' }}>
-			<div style={{ marginBottom: 16 }}>
-				<h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>렌더러 데모</h1>
-				<p style={{ fontSize: 13, color: '#aaa', lineHeight: 1.5, margin: 0 }}>
+		<div className="docs-main">
+			<section className="docs-section-header">
+				<h1 className="docs-section-title">렌더러 데모</h1>
+				<p className="docs-section-desc">
 					셀을 어떻게 그릴지 결정하는 <code>renderer</code> 예제입니다.
 				</p>
-				<ul style={{ fontSize: 12, color: '#bbb', marginTop: 8, paddingLeft: 16 }}>
+				<ul className="docs-section-bullets">
 					<li>
 						<code>type: 'text'</code> – 기본 텍스트 출력
 					</li>
@@ -38,16 +37,9 @@ const RendererDemoPage: React.FC = () => {
 						<code>type: 'dropdown'</code> – 값 → 라벨 매핑 출력
 					</li>
 				</ul>
-			</div>
+			</section>
 
-			<div
-				style={{
-					backgroundColor: '#2a2a2a',
-					border: '1px solid #444',
-					borderRadius: 6,
-					padding: 16,
-				}}
-			>
+			<section className="docs-panel">
 				<OneGrid
 					ref={gridRef}
 					columns={columns}
@@ -64,7 +56,7 @@ const RendererDemoPage: React.FC = () => {
 					}}
 					onRowsChange={setRows}
 				/>
-			</div>
+			</section>
 		</div>
 	);
 };

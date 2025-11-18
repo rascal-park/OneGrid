@@ -15,11 +15,11 @@ import type { SortState } from '../../types/utilsSort';
 import OneGridBody from './OneGridBody';
 import OneGridHeader from './OneGridHeader';
 
-// 색/스타일 상수 (기존과 동일)
-const headerBg = '#2a2a2a';
-const bodyBgA = '#1e1e1e';
-const bodyBgB = '#252525';
-const border = '#444';
+// 색/스타일 상수 → CSS 변수 사용
+const headerBg = 'var(--grid-header-bg)';
+const bodyBgA = 'var(--grid-body-a)';
+const bodyBgB = 'var(--grid-body-b)';
+const border = 'var(--grid-border)';
 
 const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 	({ columns, rows, rowKeyField = 'id', height = 300, width, options, onRowsChange }: OneGridProps, ref) => {
@@ -612,7 +612,7 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 					flexDirection: 'column',
 					border: `1px solid ${border}`,
 					backgroundColor: bodyBgA,
-					color: '#fff',
+					color: 'var(--fg)',
 					fontSize: 12,
 					height,
 					width: width ?? 'fit-content',

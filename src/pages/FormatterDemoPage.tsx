@@ -1,4 +1,3 @@
-// src/pages/FormatterDemoPage.tsx
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
 import { createFormatterColumns } from '../types/demoColumns';
@@ -11,13 +10,13 @@ const FormatterDemoPage: React.FC = () => {
 	const columns: OneGridColumn[] = useMemo(() => createFormatterColumns(() => {}), []);
 
 	return (
-		<div style={{ color: '#fff' }}>
-			<div style={{ marginBottom: 16 }}>
-				<h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>포매터 데모</h1>
-				<p style={{ fontSize: 13, color: '#aaa', lineHeight: 1.5, margin: 0 }}>
+		<div className="docs-main">
+			<section className="docs-section-header">
+				<h1 className="docs-section-title">포매터 데모</h1>
+				<p className="docs-section-desc">
 					원본 값은 그대로 두고 화면에 표시되는 값만 바꾸는 <code>formatter</code> 예제입니다.
 				</p>
-				<ul style={{ fontSize: 12, color: '#bbb', marginTop: 8, paddingLeft: 16 }}>
+				<ul className="docs-section-bullets">
 					<li>
 						<code>num</code> : 1000000 → &quot;1,000,000원&quot;
 					</li>
@@ -25,16 +24,9 @@ const FormatterDemoPage: React.FC = () => {
 						<code>birth</code> : &quot;2025-01-10&quot; → &quot;2025/01/10&quot;
 					</li>
 				</ul>
-			</div>
+			</section>
 
-			<div
-				style={{
-					backgroundColor: '#2a2a2a',
-					border: '1px solid #444',
-					borderRadius: 6,
-					padding: 16,
-				}}
-			>
+			<section className="docs-panel">
 				<OneGrid
 					ref={gridRef}
 					columns={columns}
@@ -49,7 +41,7 @@ const FormatterDemoPage: React.FC = () => {
 						headerAlign: 'center',
 					}}
 				/>
-			</div>
+			</section>
 		</div>
 	);
 };
