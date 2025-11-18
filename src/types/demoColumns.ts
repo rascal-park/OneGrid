@@ -23,14 +23,13 @@ export function createBaseColumns(setRows: React.Dispatch<React.SetStateAction<a
 			headerName: 'ID',
 			width: 60,
 			sortable: true,
-			align: 'left',
+			align: 'center',
 			renderer: { type: 'text' },
 			editor: { type: 'number', step: 1 },
 		},
 		{
 			field: 'name',
 			headerName: '이름(text)',
-			width: 100,
 			sortable: true,
 			align: 'center',
 			renderer: { type: 'text' },
@@ -64,6 +63,7 @@ export function createBaseColumns(setRows: React.Dispatch<React.SetStateAction<a
 		{
 			field: 'active',
 			headerName: '사용여부(checkbox)',
+			width: 120,
 			align: 'center',
 			renderer: {
 				type: 'checkbox',
@@ -154,6 +154,7 @@ export function createBaseColumns(setRows: React.Dispatch<React.SetStateAction<a
 			field: 'action',
 			headerName: '액션(button)',
 			width: 90,
+			align: 'center',
 			renderer: {
 				type: 'button',
 				props: {
