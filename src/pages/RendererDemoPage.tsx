@@ -1,7 +1,7 @@
 // src/pages/RendererDemoPage.tsx
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
-import { createRendererColumns } from '../types/demoCloumns';
+import { createRendererColumns } from '../types/demoColumns';
 import { DEMO_ROWS } from '../types/demoRows';
 import type { OneGridColumn, OneGridHandle } from '../types/types';
 

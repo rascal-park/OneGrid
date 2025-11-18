@@ -6,6 +6,7 @@ import DocsLayout from './layout/DocsLayout';
 import BasicGridPage from './pages/BasicGridPage';
 import EditorDemoPage from './pages/EditorDemoPage';
 import FormatterDemoPage from './pages/FormatterDemoPage';
+import HeaderGroupDemoPage from './pages/HeaderDemoPage';
 import OptionsDemoPage from './pages/OptionsDemoPage';
 import RendererDemoPage from './pages/RendererDemoPage';
 
@@ -21,6 +22,7 @@ const App: React.FC = () => {
 					<Route path="/editor" element={<EditorDemoPage />} />
 					<Route path="/formatter" element={<FormatterDemoPage />} />
 					<Route path="/options" element={<OptionsDemoPage />} />
+					<Route path="/header-group" element={<HeaderGroupDemoPage />} />
 				</Route>
 			</Routes>
 		</HashRouter>

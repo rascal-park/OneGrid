@@ -1,7 +1,7 @@
 // src/pages/FormatterDemoPage.tsx
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
-import { createFormatterColumns } from '../types/demoCloumns';
+import { createFormatterColumns } from '../types/demoColumns';
 import { DEMO_ROWS } from '../types/demoRows';
 import type { OneGridColumn, OneGridHandle } from '../types/types';
 

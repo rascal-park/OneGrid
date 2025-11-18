@@ -1,7 +1,7 @@
 // src/pages/EditorDemoPage.tsx
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
-import { createEditorColumns } from '../types/demoCloumns';
+import { createEditorColumns } from '../types/demoColumns';
 import { DEMO_ROWS } from '../types/demoRows';
 import type { OneGridColumn, OneGridHandle } from '../types/types';
 

@@ -20,7 +20,26 @@ export default defineConfig([
 			globals: globals.browser,
 		},
 		rules: {
+			// any 허용
 			'@typescript-eslint/no-explicit-any': 'off',
+
+			// JS 기본 no-unused-vars 끄기 (TS 버전이 대신함)
+			'no-unused-vars': 'off',
+
+			// TS unused-vars 설정
+			// - 언더스코어로 시작하면(_undoStack, _foo) 무시
+			// - 에러 말고 경고로만 보고 싶으면 'warn'
+			//   완전 끄고 싶으면 'off'
+			'@typescript-eslint/no-unused-vars': [
+				'warn',
+				{
+					vars: 'all',
+					args: 'after-used',
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+					ignoreRestSiblings: true,
+				},
+			],
 		},
 	},
 ]);

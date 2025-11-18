@@ -83,6 +83,7 @@ export interface OneGridColumn {
 	align?: 'left' | 'center' | 'right';
 	filterable?: boolean;
 	filterOptions?: { value: any; label: string }[];
+	children?: OneGridColumn[];
 }
 
 export interface OneGridOptions {

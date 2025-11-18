@@ -1,7 +1,7 @@
 // src/pages/BasicGridPage.tsx (기존 BasicGridPage를 "기본 출력" 버전으로 변경)
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
-import { createBasicColumns } from '../types/demoCloumns';
+import { createBasicColumns } from '../types/demoColumns';
 import { DEMO_ROWS } from '../types/demoRows';
 import type { OneGridColumn, OneGridHandle } from '../types/types';
 

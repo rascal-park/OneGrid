@@ -168,6 +168,97 @@ export function createBaseColumns(setRows: React.Dispatch<React.SetStateAction<a
 	];
 }
 
+// 분기/월 그룹 헤더 데모용
+export function createQuarterGroupColumns(): OneGridColumn[] {
+	return [
+		{ field: 'region', headerName: '지역' },
+		{
+			field: 'y2022',
+			headerName: '2022년',
+			children: [
+				{
+					field: 'q1',
+					headerName: '1분기',
+					children: [
+						{ field: 'y22m1', headerName: '1월', width: 80 },
+						{ field: 'y22m2', headerName: '2월', width: 80 },
+						{ field: 'y22m3', headerName: '3월', width: 80 },
+					],
+				},
+				{
+					field: 'q2',
+					headerName: '2분기',
+					children: [
+						{ field: 'y22m4', headerName: '4월', width: 80 },
+						{ field: 'y22m5', headerName: '5월', width: 80 },
+						{ field: 'y22m6', headerName: '6월', width: 80 },
+					],
+				},
+				{
+					field: 'q3',
+					headerName: '3분기',
+					children: [
+						{ field: 'y22m7', headerName: '7월', width: 80 },
+						{ field: 'y22m8', headerName: '8월', width: 80 },
+						{ field: 'y22m9', headerName: '9월', width: 80 },
+					],
+				},
+				{
+					field: 'q4',
+					headerName: '4분기',
+					children: [
+						{ field: 'y22m10', headerName: '10월', width: 80 },
+						{ field: 'y22m11', headerName: '11월', width: 80 },
+						{ field: 'y22m12', headerName: '12월', width: 80 },
+					],
+				},
+			],
+		},
+		{
+			field: 'y2023',
+			headerName: '2023년',
+			children: [
+				{
+					field: 'q1',
+					headerName: '1분기',
+					children: [
+						{ field: 'y23m1', headerName: '1월', width: 80 },
+						{ field: 'y23m2', headerName: '2월', width: 80 },
+						{ field: 'y23m3', headerName: '3월', width: 80 },
+					],
+				},
+				{
+					field: 'q2',
+					headerName: '2분기',
+					children: [
+						{ field: 'y23m4', headerName: '4월', width: 80 },
+						{ field: 'y23m5', headerName: '5월', width: 80 },
+						{ field: 'y23m6', headerName: '6월', width: 80 },
+					],
+				},
+				{
+					field: 'q3',
+					headerName: '3분기',
+					children: [
+						{ field: 'y23m7', headerName: '7월', width: 80 },
+						{ field: 'y23m8', headerName: '8월', width: 80 },
+						{ field: 'y23m9', headerName: '9월', width: 80 },
+					],
+				},
+				{
+					field: 'q4',
+					headerName: '4분기',
+					children: [
+						{ field: 'y23m10', headerName: '10월', width: 80 },
+						{ field: 'y23m11', headerName: '11월', width: 80 },
+						{ field: 'y23m12', headerName: '12월', width: 80 },
+					],
+				},
+			],
+		},
+	];
+}
+
 /** 1) 기본 출력용: 텍스트/숫자/날짜/체크박스 */
 export function createBasicColumns(setRows: React.Dispatch<React.SetStateAction<any[]>>): OneGridColumn[] {
 	const all = createBaseColumns(setRows);
