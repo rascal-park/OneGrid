@@ -281,7 +281,16 @@ function renderByType(type: string, params: RenderByTypeParams): React.ReactNode
 
 		// 5) 버튼
 		case 'button': {
-			const label = formattedValue != null ? formattedValue : value ?? '';
+			// 1. label 우선순위: rendererProps.label > formattedValue > value
+			const rawLabel = rendererProps.label ?? (formattedValue != null ? formattedValue : value ?? '');
+
+			const label = rawLabel != null ? String(rawLabel) : '';
+
+			// 2. 라벨이 비어있으면 버튼 자체를 렌더링하지 않음
+			if (!label.trim()) {
+				return null;
+			}
+
 			const onClick = rendererProps.onClick as ((p: OneGridRenderParams) => void) | undefined;
 
 			return (
