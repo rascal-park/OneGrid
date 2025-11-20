@@ -244,13 +244,13 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			return sum;
 		}, [effectiveColumns, columnWidths, width]);
 
-		function findRealIndexByDisplayIndex(displayIndex: number): number {
-			if (displayIndex < 0 || displayIndex >= displayRows.length) return -1;
-			const targetRow = displayRows[displayIndex];
-			const targetKey = getRowKey(targetRow);
-			if (targetKey === undefined) return -1;
-			return internalRows.findIndex(r => getRowKey(r) === targetKey);
-		}
+		// function findRealIndexByDisplayIndex(displayIndex: number): number {
+		// 	if (displayIndex < 0 || displayIndex >= displayRows.length) return -1;
+		// 	const targetRow = displayRows[displayIndex];
+		// 	const targetKey = getRowKey(targetRow);
+		// 	if (targetKey === undefined) return -1;
+		// 	return internalRows.findIndex(r => getRowKey(r) === targetKey);
+		// }
 
 		const flexCount = useMemo(() => getFlexCount(effectiveColumns), [effectiveColumns]);
 
