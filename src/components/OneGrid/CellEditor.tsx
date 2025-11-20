@@ -42,8 +42,8 @@ const CellEditor: React.FC<CellEditorProps> = ({
 		height: rowHeight - 6,
 		lineHeight: `${rowHeight - 6}px`,
 		fontSize: 12,
-		backgroundColor: '#000',
-		color: '#fff',
+		backgroundColor: 'var(--bg)',
+		color: 'var(--fg)',
 		border: '1px solid #888',
 		borderRadius: 3,
 		padding: '0 6px',
@@ -123,9 +123,10 @@ const CellEditor: React.FC<CellEditorProps> = ({
 					onChange={e => onChangeDraft(e.target.value)}
 					onBlur={onCommit}
 					onKeyDown={handleKeyDown}
+					className="onegrid-date-input"
 					style={{
 						...commonStyle,
-						paddingRight: 24,
+						paddingRight: 4,
 					}}
 				/>
 				<button

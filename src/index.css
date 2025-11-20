@@ -301,3 +301,22 @@ body.theme-light {
 	scrollbar-width: thin;
 	scrollbar-color: #b5b5b5 #e8e8e8;
 }
+
+/* 크롬, 엣지, 사파리 (WebKit 계열) */
+.onegrid-date-input::-webkit-calendar-picker-indicator {
+	display: none;
+	-webkit-appearance: none;
+}
+
+/* WebKit 계열에서 남는 기본 스타일 제거 */
+.onegrid-date-input {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: textfield; /* 파이어폭스용 */
+}
+
+/* (선택) 안쪽 스핀버튼/클리어 버튼도 같이 제거하고 싶으면 */
+.onegrid-date-input::-webkit-inner-spin-button,
+.onegrid-date-input::-webkit-clear-button {
+	display: none;
+}

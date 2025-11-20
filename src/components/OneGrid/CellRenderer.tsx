@@ -292,8 +292,8 @@ function renderByType(type: string, params: RenderByTypeParams): React.ReactNode
 						fontSize: 11,
 						borderRadius: 4,
 						border: '1px solid #555',
-						backgroundColor: '#333',
-						color: '#fff',
+						backgroundColor: 'var(--button-bg)',
+						color: 'var(--button-fg)',
 						cursor: 'pointer',
 					}}
 					onClick={e => {
