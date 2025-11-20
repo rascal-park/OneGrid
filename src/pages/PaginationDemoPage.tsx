@@ -13,7 +13,7 @@ const PaginationDemoPage: React.FC = () => {
 	// 데모용으로 rows 좀 늘려주기
 	const [rows, setRows] = useState(() => {
 		const result: any[] = [];
-		for (let i = 0; i < 50; i += 1) {
+		for (let i = 0; i < 500; i += 1) {
 			DEMO_ROWS.forEach((r, idx) => {
 				result.push({
 					...r,
