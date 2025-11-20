@@ -31,7 +31,6 @@ const FormatterDemoPage: React.FC = () => {
 					ref={gridRef}
 					columns={columns}
 					rows={rows}
-					rowKeyField="id"
 					height={400}
 					width={'100%'}
 					options={{

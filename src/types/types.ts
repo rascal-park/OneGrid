@@ -104,7 +104,7 @@ export interface OneGridOptions {
 export interface OneGridProps {
 	columns: OneGridColumn[];
 	rows: any[];
-	rowKeyField?: string;
+	//rowKeyField?: string;
 	height?: number | string;
 	width?: number | string;
 	options?: OneGridOptions;
@@ -116,6 +116,34 @@ export interface OneGridHandle {
 	getRows: () => any[];
 	getActiveCell: () => { rowKey: string | number; colField: string } | null;
 	startEditAt: (rowKey: string | number, colField: string) => void;
+
+	// 행 추가/삭제 + 선택삭제
+	addRow: (
+		position?: 'first' | 'last' | 'index',
+		options?: {
+			index?: number; // position === 'index' 일 때 기준 display index
+			row?: any; // 기본값 {} 사용하고 싶으면 생략
+		},
+	) => void;
+	removeRow: (
+		position?: 'first' | 'last' | 'index',
+		options?: {
+			index?: number; // position === 'index' 일 때 기준 display index
+		},
+	) => void;
+	removeSelectedRows: () => void; // 셀선택/체크박스 기준 삭제
+	resetGrid: (rows?: any[]) => void; // 전체 리셋(없으면 빈 배열, 있으면 그 데이터로)
+
+	// 상태 조회
+	getChangedRows: () => any[];
+	getInsertedRows: () => any[];
+	getUpdatedRows: () => any[];
+	getDeletedRows: () => any[];
+
+	// 선택 관련 조회
+	getCheckedRows: () => any[];
+	getSelectedRows: () => any[];
+	getFocusedRows: () => any[];
 }
 
 /** 내부에서 쓰는 셀 좌표 */

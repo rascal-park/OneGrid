@@ -17,6 +17,7 @@ const Sidebar: React.FC = () => {
 				{ label: '포매터', to: '/formatter' },
 				{ label: '옵션', to: '/options' },
 				{ label: '헤더 그룹', to: '/header-group' },
+				{ label: '그리드 이벤트', to: '/row-ops' },
 			],
 		},
 	];

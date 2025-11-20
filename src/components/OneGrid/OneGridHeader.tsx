@@ -269,6 +269,8 @@ const OneGridHeader: React.FC<OneGridHeaderProps> = ({
 					height: headerRowHeight,
 					display: 'flex',
 					zIndex: 2, // leaf 줄이 overlay 위
+					borderBottom: `1px solid ${border}`,
+					borderRight: `1px solid ${border}`,
 				}}
 			>
 				{effectiveColumns.map((col, colIdx) => {

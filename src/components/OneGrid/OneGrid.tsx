@@ -1,5 +1,5 @@
 // src/components/OneGrid/OneGrid.tsx
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
 import type { CellCoord, OneGridColumn, OneGridHandle, OneGridOptions, OneGridProps } from '../../types/types';
 
@@ -21,8 +21,11 @@ const bodyBgA = 'var(--grid-body-a)';
 const bodyBgB = 'var(--grid-body-b)';
 const border = 'var(--grid-border)';
 
+const STATUS_FIELD = '__rowStatus__' as const; // '', 'I', 'U', 'D'
+const INTERNAL_KEY_FIELD = '_onegridRowKey' as const;
+
 const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
-	({ columns, rows, rowKeyField = 'id', height = 300, width, options, onRowsChange }: OneGridProps, ref) => {
+	({ columns, rows, height = 300, width, options, onRowsChange }: OneGridProps, ref) => {
 		const {
 			rowHeight: optRowHeight = 32,
 			editable: optEditable = true,
@@ -51,35 +54,51 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 
 		// ===== 내부 rowKey 관리 =====
 		const autoIdCounterRef = useRef(0);
-		function ensureInternalKey(r: any): any {
-			const hasUserKey = r[rowKeyField] !== undefined && r[rowKeyField] !== null;
-			if (hasUserKey) return r;
 
-			if (r._onegridRowKey === undefined || r._onegridRowKey === null) {
-				autoIdCounterRef.current += 1;
-				return {
-					...r,
-					_onegridRowKey: autoIdCounterRef.current,
+		function generateInternalKey(): string {
+			// 브라우저 환경이면 거의 다 있음
+			if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+				return crypto.randomUUID();
+			}
+			// 혹시 모를 환경 대비: timestamp + counter
+			autoIdCounterRef.current += 1;
+			return `og_${Date.now()}_${autoIdCounterRef.current}`;
+		}
+
+		const ensureInternalKey = useCallback((r: any): any => {
+			let base = r;
+
+			if (base[INTERNAL_KEY_FIELD] == null) {
+				base = {
+					...base,
+					[INTERNAL_KEY_FIELD]: generateInternalKey(),
 				};
 			}
-			return r;
-		}
-		function attachInternalKeys(rawRows: any[]): any[] {
-			return rawRows.map(r => ensureInternalKey(r));
-		}
-		function getRowKey(row: any): string | number | undefined {
-			if (row[rowKeyField] !== undefined && row[rowKeyField] !== null) {
-				return row[rowKeyField];
+
+			if (base[STATUS_FIELD] === undefined) {
+				base = {
+					...base,
+					[STATUS_FIELD]: '',
+				};
 			}
-			return row._onegridRowKey;
+
+			return base;
+		}, []);
+
+		const attachInternalKeys = useCallback(
+			(rawRows: any[]): any[] => rawRows.map(r => ensureInternalKey(r)),
+			[ensureInternalKey],
+		);
+
+		function getRowKey(row: any): string | undefined {
+			return row[INTERNAL_KEY_FIELD];
 		}
 
 		const [internalRows, setInternalRows] = useState<any[]>(() => attachInternalKeys(rows));
 
 		useEffect(() => {
 			setInternalRows(attachInternalKeys(rows));
-			// eslint-disable-next-line react-hooks/exhaustive-deps
-		}, [rows]);
+		}, [rows, attachInternalKeys]);
 
 		// ===== 선택 상태 =====
 		const [activeCell, setActiveCell] = useState<CellCoord | null>(null);
@@ -225,20 +244,31 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			return sum;
 		}, [effectiveColumns, columnWidths, width]);
 
+		function findRealIndexByDisplayIndex(displayIndex: number): number {
+			if (displayIndex < 0 || displayIndex >= displayRows.length) return -1;
+			const targetRow = displayRows[displayIndex];
+			const targetKey = getRowKey(targetRow);
+			if (targetKey === undefined) return -1;
+			return internalRows.findIndex(r => getRowKey(r) === targetKey);
+		}
+
 		const flexCount = useMemo(() => getFlexCount(effectiveColumns), [effectiveColumns]);
 
 		// ===== 필터 적용 =====
 		const filteredRows = useMemo(() => {
-			if (!enableHeaderFilter) return internalRows;
+			// 기본적으로 삭제된 행(D)은 안 보여주기
+			const baseRows = internalRows.filter(r => r[STATUS_FIELD] !== 'D');
+
+			if (!enableHeaderFilter) return baseRows;
 
 			const activeFields = Object.keys(columnFilters).filter(field => {
 				const v = columnFilters[field];
 				if (Array.isArray(v)) return v.length > 0;
 				return v !== undefined && v !== null && v !== '';
 			});
-			if (activeFields.length === 0) return internalRows;
+			if (activeFields.length === 0) return baseRows;
 
-			return internalRows.filter(row => {
+			return baseRows.filter(row => {
 				return activeFields.every(field => {
 					const col = effectiveColumns.find(c => c.field === field);
 					if (!col || !col.filterable) return true;
@@ -336,10 +366,20 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			pushHistoryBeforeChange();
 
 			const updated = [...internalRows];
-			updated[realIndex] = {
-				...updated[realIndex],
+			const prevRow = updated[realIndex];
+
+			const nextRow: any = {
+				...prevRow,
 				[colField]: draft,
 			};
+
+			// 상태 플래그 갱신
+			const prevStatus = prevRow[STATUS_FIELD];
+			if (prevStatus !== 'I' && prevStatus !== 'D') {
+				nextRow[STATUS_FIELD] = 'U';
+			}
+
+			updated[realIndex] = nextRow;
 
 			setInternalRows(updated);
 			onRowsChange?.(updated);
@@ -558,6 +598,158 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			}
 		}
 
+		// === 선택/편집 상태 초기화 헬퍼 ===
+		function clearSelectionState() {
+			setActiveCell(null);
+			setAnchorCell(null);
+			setSelectedCells(new Set());
+			setSelectionRect(null);
+			setEditCell(null);
+		}
+
+		// ===== 내부용 행 추가 =====
+		function internalAddRow(position: 'first' | 'last' | 'index' = 'last', options?: { index?: number; row?: any }) {
+			pushHistoryBeforeChange();
+
+			// 기본 newRow (일단 빈 객체, 나중에 status 컬럼 등 붙이기 좋게)
+			const baseRow = options?.row ?? {};
+			const withKey = ensureInternalKey(baseRow);
+
+			const newRow = {
+				...withKey,
+				[STATUS_FIELD]: 'I', // 신규 행은 무조건 I
+			};
+
+			let insertIndex = internalRows.length;
+
+			if (position === 'first') {
+				insertIndex = 0;
+			} else if (position === 'index') {
+				if (typeof options?.index === 'number') {
+					// 명시적인 index 가 있으면 우선
+					insertIndex = Math.min(Math.max(options.index, 0), internalRows.length);
+				} else if (activeCell) {
+					// activeCell 기준으로 internalRows 인덱스 찾기
+					const targetKey = activeCell.rowKey;
+					const realIndex = internalRows.findIndex(r => getRowKey(r) === targetKey);
+					insertIndex = realIndex >= 0 ? realIndex : internalRows.length;
+				} else {
+					// activeCell도 없고 index도 없음 → 마지막에
+					insertIndex = internalRows.length;
+				}
+			} else {
+				// 'last' 또는 undefined
+				insertIndex = internalRows.length;
+			}
+
+			const next = [...internalRows];
+			next.splice(insertIndex, 0, newRow);
+
+			setInternalRows(next);
+			onRowsChange?.(next);
+
+			// 구조가 바뀌었으니 selection/편집 상태는 리셋
+			clearSelectionState();
+		}
+
+		// ===== 내부용 단일 행 삭제 =====
+		function internalRemoveRow(position: 'first' | 'last' | 'index' = 'last', options?: { index?: number }) {
+			if (internalRows.length === 0) return;
+
+			let removeIndex = internalRows.length - 1;
+
+			if (position === 'first') {
+				removeIndex = 0;
+			} else if (position === 'index') {
+				if (typeof options?.index === 'number') {
+					removeIndex = Math.min(Math.max(options.index, 0), internalRows.length - 1);
+				} else if (activeCell) {
+					const targetKey = activeCell.rowKey;
+					const realIndex = internalRows.findIndex(r => getRowKey(r) === targetKey);
+					removeIndex = realIndex >= 0 ? realIndex : internalRows.length - 1;
+				} else {
+					removeIndex = internalRows.length - 1;
+				}
+			} else {
+				// 'last' or undefined
+				removeIndex = internalRows.length - 1;
+			}
+
+			if (removeIndex < 0 || removeIndex >= internalRows.length) return;
+
+			pushHistoryBeforeChange();
+
+			const targetRow = internalRows[removeIndex];
+			const prevStatus = targetRow[STATUS_FIELD];
+
+			let next: any[];
+
+			if (prevStatus === 'I') {
+				// 신규행은 그냥 제거 (서버에 D 안 보낼 거면 이렇게)
+				next = internalRows.filter((_, idx) => idx !== removeIndex);
+			} else {
+				// 기존행은 D 로 마킹해서 내부에는 유지
+				next = internalRows.map((row, idx) => (idx === removeIndex ? { ...row, [STATUS_FIELD]: 'D' } : row));
+			}
+
+			setInternalRows(next);
+			onRowsChange?.(next);
+
+			clearSelectionState();
+		}
+
+		// ===== 내부용 선택 행 삭제 (체크박스 기반) =====
+		function internalRemoveSelectedRows() {
+			if (checkedRowKeys.size === 0) return;
+
+			pushHistoryBeforeChange();
+
+			const next: any[] = [];
+
+			for (const row of internalRows) {
+				const key = getRowKey(row);
+				if (key === undefined || !checkedRowKeys.has(key)) {
+					// 체크 안된 행은 그대로 유지
+					next.push(row);
+					continue;
+				}
+
+				const prevStatus = row[STATUS_FIELD];
+
+				if (prevStatus === 'I') {
+					// 신규행은 완전 제거 → next 에 안 넣음
+					continue;
+				}
+
+				// 기존행은 D로 마킹해서 next에 넣어둠
+				next.push({
+					...row,
+					[STATUS_FIELD]: 'D',
+				});
+			}
+
+			setInternalRows(next);
+			onRowsChange?.(next);
+
+			setCheckedRowKeys(new Set());
+			clearSelectionState();
+		}
+
+		// ===== 내부용 그리드 리셋 =====
+		function internalResetGrid(nextRows?: any[]) {
+			const base = Array.isArray(nextRows) ? nextRows : [];
+			const withKeys = attachInternalKeys(base);
+
+			setInternalRows(withKeys);
+			onRowsChange?.(withKeys);
+
+			// 히스토리/선택/체크박스 다 리셋
+			setUndoStack([]);
+			setRedoStack([]);
+			setCheckedRowKeys(new Set());
+			clearSelectionState();
+		}
+
 		// ===== ref API =====
 		useImperativeHandle(ref, () => ({
 			setRows(next) {
@@ -587,6 +779,54 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 					colIndex: cIndex,
 				};
 				enterEditMode(coord);
+			},
+
+			// === 여기부터 새로 추가 ===
+			addRow(position, options) {
+				internalAddRow(position ?? 'last', options);
+			},
+			removeRow(position, options) {
+				internalRemoveRow(position ?? 'last', options);
+			},
+			removeSelectedRows() {
+				internalRemoveSelectedRows();
+			},
+			resetGrid(nextRows) {
+				internalResetGrid(nextRows);
+			},
+			getInsertedRows() {
+				return internalRows.filter(r => r[STATUS_FIELD] === 'I');
+			},
+			getUpdatedRows() {
+				return internalRows.filter(r => r[STATUS_FIELD] === 'U');
+			},
+			getDeletedRows() {
+				return internalRows.filter(r => r[STATUS_FIELD] === 'D');
+			},
+			getChangedRows() {
+				return internalRows.filter(r => {
+					const st = r[STATUS_FIELD];
+					return st === 'I' || st === 'U' || st === 'D';
+				});
+			},
+			getCheckedRows() {
+				return internalRows.filter(r => {
+					const rk = getRowKey(r);
+					return rk != null && checkedRowKeys.has(rk);
+				});
+			},
+			getSelectedRows() {
+				const rowKeyStrings = new Set<string>();
+				selectedCells.forEach(key => {
+					const [rk] = key.split('::');
+					if (rk && rk !== 'undefined') rowKeyStrings.add(rk);
+				});
+				return internalRows.filter(r => rowKeyStrings.has(String(getRowKey(r))));
+			},
+			getFocusedRows() {
+				if (!activeCell) return [];
+				const rk = activeCell.rowKey;
+				return internalRows.filter(r => getRowKey(r) === rk);
 			},
 		}));
 

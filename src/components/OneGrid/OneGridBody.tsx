@@ -60,7 +60,7 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 
 				return (
 					<div
-						key={rowKeyVal ?? rowIndex}
+						key={rowKeyVal ?? `idx:${rowIndex}`}
 						style={{
 							display: 'flex',
 							minWidth: 0,

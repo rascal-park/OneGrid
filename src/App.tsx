@@ -9,6 +9,7 @@ import FormatterDemoPage from './pages/FormatterDemoPage';
 import HeaderGroupDemoPage from './pages/HeaderDemoPage';
 import OptionsDemoPage from './pages/OptionsDemoPage';
 import RendererDemoPage from './pages/RendererDemoPage';
+import RowOpsDemoPage from './pages/RowOpsDemoPage';
 import { ThemeProvider } from './theme/ThemeContext';
 
 const App: React.FC = () => {
@@ -24,6 +25,7 @@ const App: React.FC = () => {
 						<Route path="/formatter" element={<FormatterDemoPage />} />
 						<Route path="/options" element={<OptionsDemoPage />} />
 						<Route path="/header-group" element={<HeaderGroupDemoPage />} />
+						<Route path="/row-ops" element={<RowOpsDemoPage />} />
 					</Route>
 				</Routes>
 			</HashRouter>

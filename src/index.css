@@ -45,9 +45,9 @@ body.theme-dark {
 	--panel-bg: #2a2a2a;
 	--panel-border: #444444;
 
-	--grid-header-bg: #2a2a2a;
-	--grid-body-a: #1e1e1e;
-	--grid-body-b: #252525;
+	--grid-header-bg: #1a1a1a;
+	--grid-body-a: #252525;
+	--grid-body-b: #1e1e1e;
 	--grid-border: #444444;
 	--grid-edit-bg: #3a3a3a;
 	--grid-selected-bg: #4a4a4a;

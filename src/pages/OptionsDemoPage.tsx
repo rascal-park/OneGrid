@@ -40,7 +40,6 @@ const OptionsDemoPage: React.FC = () => {
 					ref={gridRef}
 					columns={columns}
 					rows={rows}
-					rowKeyField="id"
 					height={500}
 					width={'100%'}
 					options={{

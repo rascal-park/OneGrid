@@ -24,7 +24,6 @@ const HeaderDemoPage: React.FC = () => {
 					ref={gridRef}
 					columns={columns}
 					rows={rows}
-					rowKeyField="id"
 					width={'100%'}
 					height={350}
 					options={{
