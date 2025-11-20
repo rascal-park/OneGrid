@@ -99,6 +99,7 @@ export interface OneGridOptions {
 	enableColumnResize?: boolean;
 	enableHeaderFilter?: boolean;
 	showCheckBox?: boolean;
+	pagination?: OneGridPaginationOptions;
 }
 
 export interface OneGridProps {
@@ -109,6 +110,16 @@ export interface OneGridProps {
 	width?: number | string;
 	options?: OneGridOptions;
 	onRowsChange?: (nextRows: any[]) => void;
+
+	// 서버/클라이언트 공통 페이징 정보
+	/** 전체 건수 (server 모드일 때 서버 total, 없으면 rows.length 사용) */
+	totalCount?: number;
+	/** 현재 페이지 (default = 1). 안 넘기면 내부에서 관리 */
+	currentPage?: number;
+	/** 페이지당 행 수. 안 넘기면 내부에서 관리 */
+	pageSize?: number;
+	onPageChange?: (page: number, pageSize: number) => void;
+	onPageSizeChange?: (pageSize: number) => void;
 }
 
 export interface OneGridHandle {
@@ -144,6 +155,17 @@ export interface OneGridHandle {
 	getCheckedRows: () => any[];
 	getSelectedRows: () => any[];
 	getFocusedRows: () => any[];
+
+	// 페이징 정보
+	getPageInfo: () => {
+		currentPage: number;
+		pageSize: number;
+		totalCount: number;
+		pageCount: number;
+	};
+
+	// 페이지 이동 (버튼, 외부 제어용)
+	gotoPage: (page: number) => void;
 }
 
 /** 내부에서 쓰는 셀 좌표 */
@@ -153,3 +175,25 @@ export type CellCoord = {
 	rowIndex: number;
 	colIndex: number;
 };
+
+//페이징 옵션
+export interface OneGridPaginationOptions {
+	/** 페이징 모드
+	 *  - 'none'  : 기존처럼 전체 스크롤
+	 *  - 'page'  : 아래 버튼 페이징
+	 *  - 'scroll': 스크롤 페이징 (무한 스크롤 느낌)
+	 */
+	mode?: 'none' | 'page' | 'scroll';
+
+	/** 페이징 타입
+	 *  - 'client' : rows 전체를 받아서 그리드 내부에서 잘라서 사용 (프론트 페이징)
+	 *  - 'server' : 서버에서 이미 잘라서 내려주는 모드 (totalCount, currentPage 등은 서버 기준)
+	 */
+	type?: 'client' | 'server';
+
+	/** 기본 페이지 사이즈 (client 모드일 때 초기값) */
+	defaultPageSize?: number;
+
+	/** 페이지 사이즈 선택 옵션 */
+	pageSizeOptions?: number[];
+}

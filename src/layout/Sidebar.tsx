@@ -12,12 +12,23 @@ const Sidebar: React.FC = () => {
 			groupLabel: '그리드 기본',
 			children: [
 				{ label: '기본 출력', to: '/basic' },
+				{ label: '헤더 그룹', to: '/header-group' },
+				{ label: '페이지네이션', to: '/pagination' },
+			],
+		},
+		{
+			groupLabel: '그리드 편집',
+			children: [
 				{ label: '렌더러', to: '/renderer' },
 				{ label: '에디터', to: '/editor' },
 				{ label: '포매터', to: '/formatter' },
+			],
+		},
+		{
+			groupLabel: '그리드 옵션/이벤트 함수',
+			children: [
 				{ label: '옵션', to: '/options' },
-				{ label: '헤더 그룹', to: '/header-group' },
-				{ label: '그리드 이벤트', to: '/row-ops' },
+				{ label: '이벤트', to: '/row-ops' },
 			],
 		},
 	];

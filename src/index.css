@@ -29,6 +29,13 @@
 	--button-bg: #1a1a1a;
 	--button-fg: #ffffff;
 	--button-border: #555555;
+
+	--grid-footer-bg: #181818;
+	--grid-footer-border: #444444;
+	--grid-footer-fg: #dddddd;
+	--grid-footer-button-bg: #222222;
+	--grid-footer-button-fg: #f5f5f5;
+	--grid-footer-button-border: #555555;
 }
 
 /* 다크 모드 */
@@ -55,6 +62,13 @@ body.theme-dark {
 	--button-bg: #1a1a1a;
 	--button-fg: #ffffff;
 	--button-border: #555555;
+
+	--grid-footer-bg: #181818;
+	--grid-footer-border: #444444;
+	--grid-footer-fg: #dddddd;
+	--grid-footer-button-bg: #222222;
+	--grid-footer-button-fg: #f5f5f5;
+	--grid-footer-button-border: #555555;
 }
 
 /* 라이트 모드 */
@@ -81,6 +95,13 @@ body.theme-light {
 	--button-bg: #ffffff;
 	--button-fg: #222222;
 	--button-border: #cccccc;
+
+	--grid-footer-bg: #f7f7f7;
+	--grid-footer-border: #dddddd;
+	--grid-footer-fg: #444444;
+	--grid-footer-button-bg: #ffffff;
+	--grid-footer-button-fg: #222222;
+	--grid-footer-button-border: #cccccc;
 }
 
 /* html/body 기본 설정 */

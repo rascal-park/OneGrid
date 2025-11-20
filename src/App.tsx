@@ -8,6 +8,7 @@ import EditorDemoPage from './pages/EditorDemoPage';
 import FormatterDemoPage from './pages/FormatterDemoPage';
 import HeaderGroupDemoPage from './pages/HeaderDemoPage';
 import OptionsDemoPage from './pages/OptionsDemoPage';
+import PaginationDemoPage from './pages/PaginationDemoPage';
 import RendererDemoPage from './pages/RendererDemoPage';
 import RowOpsDemoPage from './pages/RowOpsDemoPage';
 import { ThemeProvider } from './theme/ThemeContext';
@@ -26,6 +27,7 @@ const App: React.FC = () => {
 						<Route path="/options" element={<OptionsDemoPage />} />
 						<Route path="/header-group" element={<HeaderGroupDemoPage />} />
 						<Route path="/row-ops" element={<RowOpsDemoPage />} />
+						<Route path="/pagination" element={<PaginationDemoPage />} />
 					</Route>
 				</Routes>
 			</HashRouter>

@@ -14,18 +14,40 @@ import type { SortState } from '../../types/utilsSort';
 
 import OneGridBody from './OneGridBody';
 import OneGridHeader from './OneGridHeader';
+import PagingButton from './PagingButtion';
 
 // 색/스타일 상수 → CSS 변수 사용
 const headerBg = 'var(--grid-header-bg)';
 const bodyBgA = 'var(--grid-body-a)';
 const bodyBgB = 'var(--grid-body-b)';
 const border = 'var(--grid-border)';
+const footerBg = 'var(--grid-footer-bg)';
+const footerBorder = 'var(--grid-footer-border)';
+const footerText = 'var(--grid-footer-fg)';
+const footerButtonBg = 'var(--grid-footer-button-bg)';
+const footerButtonFg = 'var(--grid-footer-button-fg)';
+const footerButtonBorder = 'var(--grid-footer-button-border)';
 
 const STATUS_FIELD = '__rowStatus__' as const; // '', 'I', 'U', 'D'
 const INTERNAL_KEY_FIELD = '_onegridRowKey' as const;
 
 const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
-	({ columns, rows, height = 300, width, options, onRowsChange }: OneGridProps, ref) => {
+	(
+		{
+			columns,
+			rows,
+			height = 300,
+			width,
+			options,
+			onRowsChange,
+			totalCount: externalTotalCount,
+			currentPage: controlledPage,
+			pageSize: controlledPageSize,
+			onPageChange,
+			onPageSizeChange,
+		}: OneGridProps,
+		ref,
+	) => {
 		const {
 			rowHeight: optRowHeight = 32,
 			editable: optEditable = true,
@@ -36,7 +58,12 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			enableColumnResize = false,
 			enableHeaderFilter = false,
 			showCheckBox = false,
+			pagination: paginationOptions = {},
 		}: OneGridOptions = options ?? {};
+
+		const paginationMode = paginationOptions.mode ?? 'none'; // 'none' | 'page' | 'scroll'
+		const paginationType = paginationOptions.type ?? 'client'; // 'client' | 'server'
+		const pageSizeOptions = paginationOptions.pageSizeOptions ?? [15, 30, 50, 100];
 
 		const headerJustify: 'flex-start' | 'center' | 'flex-end' =
 			headerAlign === 'right' ? 'flex-end' : headerAlign === 'center' ? 'center' : 'flex-start';
@@ -48,7 +75,7 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 		const defaultColWidth = 100;
 
 		const overflowX = scroll?.x ?? 'auto';
-		const overflowY = scroll?.y ?? 'auto';
+		const overflowY = paginationMode === 'scroll' ? 'auto' : scroll?.y ?? 'auto';
 
 		const gridRootRef = useRef<HTMLDivElement | null>(null);
 
@@ -121,6 +148,30 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 		// ===== undo / redo =====
 		const [_undoStack, setUndoStack] = useState<any[][]>([]);
 		const [_redoStack, setRedoStack] = useState<any[][]>([]);
+
+		// ===== 페이징 상태 =====
+		const [innerPageSize, setInnerPageSize] = useState<number>(
+			controlledPageSize ?? paginationOptions.defaultPageSize ?? 15,
+		);
+		const [innerPage, setInnerPage] = useState<number>(controlledPage ?? 1);
+		const [pageInput, setPageInput] = useState<string>('1');
+
+		// ===== 페이징/스크롤 상태 =====
+		const [bodyScrollTop, setBodyScrollTop] = useState(0);
+		const [bodyClientHeight, setBodyClientHeight] = useState(0);
+
+		// 외부에서 pageSize, currentPage를 제어하는 경우 동기화
+		useEffect(() => {
+			if (controlledPageSize != null) {
+				setInnerPageSize(controlledPageSize);
+			}
+		}, [controlledPageSize]);
+
+		useEffect(() => {
+			if (controlledPage != null) {
+				setInnerPage(controlledPage);
+			}
+		}, [controlledPage]);
 
 		// ===== 컬럼 순서/크기 =====
 		const [columnOrder, setColumnOrder] = useState<string[] | null>(null);
@@ -285,12 +336,76 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			});
 		}, [internalRows, columnFilters, enableHeaderFilter, effectiveColumns]);
 
-		// ===== 정렬 적용 =====
-		const displayRows = useMemo(() => applySort(filteredRows, sortState), [filteredRows, sortState]);
+		// ===== 정렬 적용 (전체 정렬 결과) =====
+		const sortedRows = useMemo(() => applySort(filteredRows, sortState), [filteredRows, sortState]);
+
+		// ===== 페이징 계산 =====
+		const clientTotalCount = sortedRows.length;
+
+		// pageSize
+		const effectivePageSize =
+			paginationMode === 'none'
+				? controlledPageSize ?? innerPageSize
+				: Math.max(1, controlledPageSize ?? innerPageSize);
+
+		// totalCount (server 모드면 외부 total 우선)
+		const totalCount = externalTotalCount ?? clientTotalCount;
+
+		// 전체 페이지 수
+		const pageCount = paginationMode === 'none' ? 1 : Math.max(1, Math.ceil(totalCount / (effectivePageSize || 1)));
+
+		// 현재 페이지 (내부/외부 제어 통합)
+		const effectivePage = paginationMode === 'none' ? 1 : Math.min(Math.max(controlledPage ?? innerPage, 1), pageCount);
+
+		useEffect(() => {
+			if (paginationMode === 'page') {
+				setPageInput(String(effectivePage));
+			}
+		}, [paginationMode, effectivePage]);
+
+		// rows 변화 시 페이지가 범위를 벗어나면 보정
+		useEffect(() => {
+			if (paginationMode === 'none') return;
+			const maxPage = Math.max(1, Math.ceil(totalCount / (effectivePageSize || 1)));
+			if (innerPage > maxPage && controlledPage == null) {
+				setInnerPage(maxPage);
+			}
+		}, [totalCount, effectivePageSize, paginationMode, innerPage, controlledPage]);
+
+		// 실제 그리드에 뿌릴 displayRows (페이징 적용)
+		const displayRows = useMemo(() => {
+			// 버튼 페이징
+			if (paginationMode === 'page') {
+				if (paginationType === 'client') {
+					const start = (effectivePage - 1) * effectivePageSize;
+					const end = start + effectivePageSize;
+					return sortedRows.slice(start, end);
+				}
+				// server 모드: 이미 서버에서 page 단위 rows를 내려줬다고 가정
+				return sortedRows;
+			}
+
+			// 스크롤 페이징 (무한 스크롤 느낌)
+			if (paginationMode === 'scroll') {
+				if (paginationType === 'client') {
+					// n페이지까지의 데이터를 잘라서 보여줌
+					const end = effectivePage * effectivePageSize;
+					return sortedRows.slice(0, end);
+				}
+				// server 모드: 외부에서 rows를 계속 append 해온다고 가정
+				return sortedRows;
+			}
+
+			// 페이징 없음
+			return sortedRows;
+		}, [sortedRows, paginationMode, paginationType, effectivePage, effectivePageSize]);
 
 		// ===== 히스토리 =====
 		function pushHistoryBeforeChange() {
-			setUndoStack(prev => [...prev, cloneRows(internalRows)]);
+			setUndoStack(prev => {
+				const next = [...prev, cloneRows(internalRows)];
+				return next.length > 20 ? next.slice(next.length - 20) : next;
+			});
 			setRedoStack([]);
 		}
 
@@ -607,6 +722,57 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			setEditCell(null);
 		}
 
+		// ===== 페이지 변경 헬퍼 =====
+		function changePage(nextPageRaw: number) {
+			if (paginationMode === 'none') return;
+
+			const nextPage = Math.min(Math.max(nextPageRaw, 1), pageCount);
+			if (nextPage === effectivePage) return;
+
+			if (controlledPage == null) {
+				setInnerPage(nextPage);
+			}
+
+			setPageInput(String(nextPage));
+
+			onPageChange?.(nextPage, effectivePageSize);
+			clearSelectionState();
+		}
+
+		function changePageSize(nextSizeRaw: number) {
+			if (paginationMode === 'none') return;
+
+			const nextSize = Math.max(1, nextSizeRaw);
+
+			if (controlledPageSize == null) {
+				setInnerPageSize(nextSize);
+				setInnerPage(1);
+			}
+
+			onPageSizeChange?.(nextSize);
+			clearSelectionState();
+		}
+
+		// ===== 스크롤 페이징 (scroll mode) =====
+		function handleScroll(e: React.UIEvent<HTMLDivElement>) {
+			const target = e.currentTarget;
+			const { scrollTop, clientHeight, scrollHeight } = target;
+
+			// 스크롤 위치 저장 → Body에서 가상 스크롤 계산에 사용
+			setBodyScrollTop(scrollTop);
+			setBodyClientHeight(clientHeight);
+
+			if (paginationMode !== 'scroll') return;
+
+			// 기존 scroll 페이징 로직
+			if (scrollTop + clientHeight >= scrollHeight - 1) {
+				const nextPage = effectivePage + 1;
+				if (nextPage <= pageCount) {
+					changePage(nextPage);
+				}
+			}
+		}
+
 		// ===== 내부용 행 추가 =====
 		function internalAddRow(position: 'first' | 'last' | 'index' = 'last', options?: { index?: number; row?: any }) {
 			pushHistoryBeforeChange();
@@ -828,6 +994,20 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				const rk = activeCell.rowKey;
 				return internalRows.filter(r => getRowKey(r) === rk);
 			},
+
+			getPageInfo() {
+				return {
+					currentPage: effectivePage,
+					pageSize: effectivePageSize,
+					totalCount,
+					pageCount,
+				};
+			},
+
+			// 페이지 이동
+			gotoPage(page: number) {
+				changePage(page);
+			},
 		}));
 
 		// 컬럼 순서 초기화
@@ -865,10 +1045,12 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				<div
 					style={{
 						flex: 1,
+						minHeight: 0,
 						overflowX,
 						overflowY,
 						position: 'relative',
 					}}
+					onScroll={handleScroll}
 				>
 					<div
 						style={{
@@ -924,9 +1106,98 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 							onTabNav={moveEditByTab}
 							bodyBgA={bodyBgA}
 							bodyBgB={bodyBgB}
+							scrollTop={bodyScrollTop}
+							clientHeight={bodyClientHeight}
 						/>
 					</div>
 				</div>
+				{paginationMode === 'page' && (
+					<div
+						style={{
+							borderTop: `1px solid ${footerBorder}`,
+							padding: '4px 8px',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							fontSize: 12,
+							backgroundColor: footerBg,
+							color: footerText,
+							gap: 8,
+						}}
+					>
+						{/* 좌측: page size */}
+						<div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+							<span style={{ opacity: 0.8 }}>Rows / page</span>
+							<select
+								value={effectivePageSize}
+								onChange={e => changePageSize(Number(e.target.value))}
+								style={{
+									padding: '0 4px',
+									height: 22,
+									borderRadius: 4,
+									border: `1px solid ${footerButtonBorder}`,
+									backgroundColor: footerButtonBg,
+									color: footerButtonFg,
+									fontSize: 12,
+								}}
+							>
+								{pageSizeOptions.map(size => (
+									<option key={size} value={size}>
+										{size}
+									</option>
+								))}
+							</select>
+						</div>
+
+						{/* 중앙: Page [input] / pageCount */}
+						<div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+							<span>Page</span>
+							<input
+								type="number"
+								min={1}
+								max={pageCount}
+								value={pageInput}
+								onChange={e => setPageInput(e.target.value)}
+								onKeyDown={e => {
+									if (e.key === 'Enter') {
+										const n = Number(pageInput);
+										if (!Number.isNaN(n) && n >= 1 && n <= pageCount) {
+											changePage(n);
+										}
+									}
+								}}
+								style={{
+									width: 40,
+									height: 22,
+									borderRadius: 4,
+									border: `1px solid ${footerButtonBorder}`,
+									backgroundColor: 'transparent',
+									color: footerButtonFg,
+									textAlign: 'center',
+									fontSize: 12,
+								}}
+							/>
+							<span style={{ opacity: 0.7 }}>/ {pageCount}</span>
+							<span style={{ opacity: 0.7, marginLeft: 8 }}>Total {totalCount.toLocaleString()}</span>
+						</div>
+
+						{/* 우측: ⏮ ◀ ▶ ⏭ */}
+						<div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+							<PagingButton disabled={effectivePage <= 1} onClick={() => changePage(1)}>
+								⏮
+							</PagingButton>
+							<PagingButton disabled={effectivePage <= 1} onClick={() => changePage(effectivePage - 1)}>
+								◀
+							</PagingButton>
+							<PagingButton disabled={effectivePage >= pageCount} onClick={() => changePage(effectivePage + 1)}>
+								▶
+							</PagingButton>
+							<PagingButton disabled={effectivePage >= pageCount} onClick={() => changePage(pageCount)}>
+								⏭
+							</PagingButton>
+						</div>
+					</div>
+				)}
 			</div>
 		);
 	},

@@ -23,7 +23,8 @@ const BasicGridPage: React.FC = () => {
 				</p>
 				<ul className="docs-section-bullets">
 					<li>
-						행 키는 <code>rowKeyField="id"</code> 를 사용합니다.
+						행 키는 <code>내부 ID : randomUUID</code> 를 사용합니다. / 추 후 사용자 지정 키 사용이 가능하도록 추가 개발
+						예정입니다.
 					</li>
 					<li>기본 정렬 / 선택 / 편집 기능은 최소 옵션으로 동작합니다.</li>
 				</ul>
@@ -41,6 +42,7 @@ const BasicGridPage: React.FC = () => {
 						rowHeight: 35,
 						editable: false,
 						headerAlign: 'center',
+						scroll: { x: 'scroll', y: 'scroll' },
 					}}
 				/>
 			</section>
