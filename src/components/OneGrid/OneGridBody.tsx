@@ -1,9 +1,9 @@
 // src/components/OneGrid/OneGridBody.tsx
 import React from 'react';
 import type { CellCoord, OneGridColumn } from '../../types/types';
-import CellEditor from './CellEditor';
-import CellRenderer from './CellRenderer';
-import { getCellStyle } from './columnLayout';
+import CellEditor from './editor/CellEditor';
+import { getCellStyle } from './layout/columnLayout';
+import CellRenderer from './renderer/CellRenderer';
 
 interface OneGridBodyProps {
 	effectiveColumns: OneGridColumn[];

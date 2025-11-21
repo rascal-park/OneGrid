@@ -1,7 +1,7 @@
 // src/demo/demoColumns.ts
 import mailIcon from '@assets/icon/icon_email.svg';
-import { createDateFormatter, createNumberFormatter } from '../components/OneGrid/formatters';
-import type { OneGridColumn } from './types';
+import { createDateFormatter, createNumberFormatter } from '../components/OneGrid/formatter/formatters';
+import type { OneGridColumn } from '../types/types';
 
 const ROLE_OPTIONS = [
 	{ value: 'ADMIN', label: '관리자' },

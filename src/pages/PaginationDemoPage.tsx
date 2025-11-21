@@ -1,8 +1,8 @@
 // src/pages/PaginationDemoPage.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
-import { createEditorColumns } from '../types/demoColumns';
-import { DEMO_ROWS } from '../types/demoRows';
+import { createEditorColumns } from '../demo/demoColumns';
+import { DEMO_ROWS } from '../demo/demoRows';
 import type { OneGridColumn, OneGridHandle } from '../types/types';
 
 type PaginationMode = 'none' | 'page' | 'scroll';

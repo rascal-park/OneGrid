@@ -1,8 +1,8 @@
 // src/components/OneGrid/OneGridHeader.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { OneGridColumn } from '../../types/types';
-import type { SortState } from '../../types/utilsSort';
-import { getCellStyle } from './columnLayout';
+import type { SortState } from '../../utils/utilsSort';
+import { getCellStyle } from './layout/columnLayout';
 
 const border = 'var(--grid-border)';
 

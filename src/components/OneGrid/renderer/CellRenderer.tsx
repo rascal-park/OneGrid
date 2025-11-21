@@ -1,5 +1,5 @@
 import React, { type JSX } from 'react';
-import type { OneGridColumn, OneGridRenderParams } from '../../types/types';
+import type { OneGridColumn, OneGridRenderParams } from '../../../types/types';
 
 interface CellRendererProps {
 	column: OneGridColumn;

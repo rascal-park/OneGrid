@@ -3,18 +3,18 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo
 
 import type { CellCoord, OneGridColumn, OneGridHandle, OneGridOptions, OneGridProps } from '../../types/types';
 
-import { filterHiddenColumns, getFlexCount, injectRowNumberColumn } from './columnLayout';
+import { filterHiddenColumns, getFlexCount, injectRowNumberColumn } from './layout/columnLayout';
 
-import { copySelectionToClipboard, pasteFromClipboard } from '../../types/utilsClipboard';
-import { cloneRows, rowsEqual } from '../../types/utilsHistory';
-import { buildRectSelection } from '../../types/utilsSelection';
-import { applySort, nextSortState } from '../../types/utilsSort';
+import { copySelectionToClipboard, pasteFromClipboard } from '../../utils/utilsClipboard';
+import { cloneRows, rowsEqual } from '../../utils/utilsHistory';
+import { buildRectSelection } from '../../utils/utilsSelection';
+import { applySort, nextSortState } from '../../utils/utilsSort';
 
-import type { SortState } from '../../types/utilsSort';
+import type { SortState } from '../../utils/utilsSort';
 
 import OneGridBody from './OneGridBody';
 import OneGridHeader from './OneGridHeader';
-import PagingButton from './PagingButtion';
+import PagingButton from './pagination/PagingButtion';
 
 // 색/스타일 상수 → CSS 변수 사용
 const headerBg = 'var(--grid-header-bg)';

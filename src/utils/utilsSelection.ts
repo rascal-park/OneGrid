@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { OneGridColumn, CellCoord } from './types';
+import type { CellCoord, OneGridColumn } from '../types/types';
 
 export function buildRectSelection(
 	anchorCell: CellCoord,

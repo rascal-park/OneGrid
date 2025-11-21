@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
-import { createOptionsColumns } from '../types/demoColumns';
-import { DEMO_ROWS } from '../types/demoRows';
+import { createOptionsColumns } from '../demo/demoColumns';
+import { DEMO_ROWS } from '../demo/demoRows';
 import type { OneGridColumn, OneGridHandle } from '../types/types';
 
 const OptionsDemoPage: React.FC = () => {

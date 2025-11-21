@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import type { OneGridColumn } from '../../types/types';
+import type { OneGridColumn } from '../../../types/types';
 
 interface CellEditorProps {
 	column: OneGridColumn;

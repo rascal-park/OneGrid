@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
-import { createRendererColumns } from '../types/demoColumns';
-import { DEMO_ROWS } from '../types/demoRows';
+import { createRendererColumns } from '../demo/demoColumns';
+import { DEMO_ROWS } from '../demo/demoRows';
 import type { OneGridColumn, OneGridHandle } from '../types/types';
 
 const RendererDemoPage: React.FC = () => {

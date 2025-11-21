@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import OneGrid from '../components/OneGrid/OneGrid';
-import { createQuarterGroupColumns } from '../types/demoColumns';
-import { DEMO_QUARTER_ROWS } from '../types/demoRows';
+import { createQuarterGroupColumns } from '../demo/demoColumns';
+import { DEMO_QUARTER_ROWS } from '../demo/demoRows';
 import type { OneGridColumn, OneGridHandle } from '../types/types';
 
 const HeaderDemoPage: React.FC = () => {

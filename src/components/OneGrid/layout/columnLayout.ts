@@ -1,4 +1,4 @@
-import type { OneGridColumn } from '../../types/types';
+import type { OneGridColumn } from '../../../types/types';
 // rowNumber용 가상 컬럼
 export function injectRowNumberColumn(columns: OneGridColumn[], showRowNumber: boolean): OneGridColumn[] {
 	if (!showRowNumber) return columns;

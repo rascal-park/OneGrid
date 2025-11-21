@@ -1,4 +1,4 @@
-import type { OneGridColumn } from './types';
+import type { OneGridColumn } from '../types/types';
 
 export function copySelectionToClipboard(
 	selectionRect: {
