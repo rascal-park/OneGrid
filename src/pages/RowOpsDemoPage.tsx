@@ -139,62 +139,62 @@ const RowOpsDemoPage: React.FC = () => {
 
 			<section className="docs-panel" style={{ marginBottom: 10 }}>
 				{/* 1줄차: 행 추가/삭제/초기화 */}
-				<div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 5 }}>
+				<div className="docs-toolbar" style={{ marginBottom: 5 }}>
 					{/* 추가 */}
-					<button type="button" onClick={handleAddFirst}>
+					<button type="button" className="docs-btn-sm" onClick={handleAddFirst}>
 						＋ 첫 행 추가
 					</button>
-					<button type="button" onClick={handleAddLast}>
+					<button type="button" className="docs-btn-sm" onClick={handleAddLast}>
 						＋ 마지막 행 추가
 					</button>
-					<button type="button" onClick={handleAddAtActive}>
+					<button type="button" className="docs-btn-sm" onClick={handleAddAtActive}>
 						＋ 선택 위치에 추가(index)
 					</button>
 
 					{/* 삭제 */}
-					<button type="button" onClick={handleRemoveFirst}>
+					<button type="button" className="docs-btn-sm" onClick={handleRemoveFirst}>
 						－ 첫 행 삭제
 					</button>
-					<button type="button" onClick={handleRemoveLast}>
+					<button type="button" className="docs-btn-sm" onClick={handleRemoveLast}>
 						－ 마지막 행 삭제
 					</button>
-					<button type="button" onClick={handleRemoveAtActive}>
+					<button type="button" className="docs-btn-sm" onClick={handleRemoveAtActive}>
 						－ 선택 위치 삭제(index)
 					</button>
-					<button type="button" onClick={handleRemoveSelectedRows}>
+					<button type="button" className="docs-btn-sm" onClick={handleRemoveSelectedRows}>
 						－ 선택(체크박스) 행 삭제
 					</button>
 
 					{/* 초기화 */}
-					<button type="button" onClick={handleResetEmpty}>
+					<button type="button" className="docs-btn-sm" onClick={handleResetEmpty}>
 						⟳ 초기화 (빈 그리드)
 					</button>
-					<button type="button" onClick={handleResetWithDemo}>
+					<button type="button" className="docs-btn-sm" onClick={handleResetWithDemo}>
 						⟳ 초기화 (DEMO_ROWS)
 					</button>
 				</div>
 
 				{/* 2줄차: CUD/선택 상태 조회 버튼 */}
-				<div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-					<button type="button" onClick={handleInsertRows}>
+				<div className="docs-toolbar" style={{ marginBottom: 8 }}>
+					<button type="button" className="docs-btn-sm" onClick={handleInsertRows}>
 						신규 행 보기 (getInsertedRows)
 					</button>
-					<button type="button" onClick={handleUpdateRows}>
+					<button type="button" className="docs-btn-sm" onClick={handleUpdateRows}>
 						수정 행 보기 (getUpdatedRows)
 					</button>
-					<button type="button" onClick={handleDeletedRows}>
+					<button type="button" className="docs-btn-sm" onClick={handleDeletedRows}>
 						삭제 행 보기 (getDeletedRows)
 					</button>
-					<button type="button" onClick={handleGetCheckedRows}>
+					<button type="button" className="docs-btn-sm" onClick={handleGetCheckedRows}>
 						체크 행 보기 (getCheckedRows)
 					</button>
-					<button type="button" onClick={handleSelectedRows}>
+					<button type="button" className="docs-btn-sm" onClick={handleSelectedRows}>
 						선택 행 보기 (getSelectedRows)
 					</button>
-					<button type="button" onClick={handleGetFocusedRows}>
+					<button type="button" className="docs-btn-sm" onClick={handleGetFocusedRows}>
 						포커스 행 보기 (getFocusedRows)
 					</button>
-					<button type="button" onClick={handleShowChanged}>
+					<button type="button" className="docs-btn-sm" onClick={handleShowChanged}>
 						변경 내역 보기 (getChangedRows)
 					</button>
 				</div>

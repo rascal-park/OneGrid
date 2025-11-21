@@ -336,8 +336,37 @@ body.theme-light {
 	-moz-appearance: textfield; /* 파이어폭스용 */
 }
 
-/* (선택) 안쪽 스핀버튼/클리어 버튼도 같이 제거하고 싶으면 */
+/* 안쪽 스핀버튼/클리어 버튼 제거 */
 .onegrid-date-input::-webkit-inner-spin-button,
 .onegrid-date-input::-webkit-clear-button {
 	display: none;
+}
+
+/* =========================================
+   Docs 전용 작은 버튼 스타일
+   ========================================= */
+.docs-btn-sm {
+	padding: 2px 6px; /* 기본 0.6em 1.2em 보다 훨씬 작게 */
+	font-size: 15px;
+	line-height: 2;
+	border-radius: 4px;
+	min-height: 22px;
+	white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.docs-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+/* 라이트/다크 모드에서도 자연스럽게 */
+body.theme-light .docs-btn-sm {
+	background-color: #ffffff;
+	color: #222222;
+}
+
+body.theme-dark .docs-btn-sm {
+	background-color: #1f1f1f;
+	color: #ffffff;
 }
