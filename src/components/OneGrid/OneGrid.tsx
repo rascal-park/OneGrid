@@ -822,27 +822,48 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 		function internalRemoveRow(position: 'first' | 'last' | 'index' = 'last', options?: { index?: number }) {
 			if (internalRows.length === 0) return;
 
-			let removeIndex = internalRows.length - 1;
+			// 1) 어떤 rowKey를 지울지 먼저 결정
+			let targetRowKey: string | number | undefined;
 
 			if (position === 'first') {
-				removeIndex = 0;
+				// 화면에 보이는 첫 행 기준
+				const firstVisible = filteredRows[0];
+				if (!firstVisible) return;
+				targetRowKey = getRowKey(firstVisible);
+			} else if (position === 'last') {
+				// 화면에 보이는 마지막 행 기준
+				const lastVisible = filteredRows[filteredRows.length - 1];
+				if (!lastVisible) return;
+				targetRowKey = getRowKey(lastVisible);
 			} else if (position === 'index') {
+				// index 모드: 명시 index → filteredRows 기준, 아니면 activeCell 기준
 				if (typeof options?.index === 'number') {
-					removeIndex = Math.min(Math.max(options.index, 0), internalRows.length - 1);
+					const visibleRow = filteredRows[options.index];
+					if (visibleRow) {
+						targetRowKey = getRowKey(visibleRow);
+					}
 				} else if (activeCell) {
-					const targetKey = activeCell.rowKey;
-					const realIndex = internalRows.findIndex(r => getRowKey(r) === targetKey);
-					removeIndex = realIndex >= 0 ? realIndex : internalRows.length - 1;
+					targetRowKey = activeCell.rowKey;
 				} else {
-					removeIndex = internalRows.length - 1;
+					// index도 없고 activeCell도 없으면, 화면 마지막 행 기준
+					const lastVisible = filteredRows[filteredRows.length - 1];
+					if (!lastVisible) return;
+					targetRowKey = getRowKey(lastVisible);
 				}
 			} else {
-				// 'last' or undefined
-				removeIndex = internalRows.length - 1;
+				// 혹시 다른 값이 들어와도 그냥 화면 마지막 행 기준으로
+				const lastVisible = filteredRows[filteredRows.length - 1];
+				if (!lastVisible) return;
+				targetRowKey = getRowKey(lastVisible);
 			}
 
-			if (removeIndex < 0 || removeIndex >= internalRows.length) return;
+			if (!targetRowKey) return;
 
+			// 2) internalRows에서 실제 인덱스 찾기
+			const removeIndex = internalRows.findIndex(r => getRowKey(r) === targetRowKey);
+			if (removeIndex < 0) return;
+
+			// 3) 기존 삭제 로직 재사용
 			pushHistoryBeforeChange();
 
 			const targetRow = internalRows[removeIndex];
@@ -851,11 +872,18 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			let next: any[];
 
 			if (prevStatus === 'I') {
-				// 신규행은 그냥 제거 (서버에 D 안 보낼 거면 이렇게)
+				// 신규행은 완전 제거
 				next = internalRows.filter((_, idx) => idx !== removeIndex);
 			} else {
-				// 기존행은 D 로 마킹해서 내부에는 유지
-				next = internalRows.map((row, idx) => (idx === removeIndex ? { ...row, [STATUS_FIELD]: 'D' } : row));
+				// 기존행은 D 플래그만
+				next = internalRows.map((row, idx) =>
+					idx === removeIndex
+						? {
+								...row,
+								[STATUS_FIELD]: 'D',
+						  }
+						: row,
+				);
 			}
 
 			setInternalRows(next);
