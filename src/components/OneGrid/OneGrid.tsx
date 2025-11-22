@@ -1,4 +1,3 @@
-// src/components/OneGrid/OneGrid.tsx
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
 import type { CellCoord, OneGridColumn, OneGridHandle, OneGridOptions, OneGridProps } from '../../types/types';
@@ -273,6 +272,22 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 
 		const effectiveColumns: OneGridColumn[] = useMemo(() => flattenLeaf(headerColumns), [headerColumns]);
 
+		// 트리 관련 설정 (트리 컬럼 / indent / rowMap)
+		const treeColumn = useMemo(() => effectiveColumns.find(c => c.isTreeColumn), [effectiveColumns]);
+		const treeIndent = treeColumn?.treeIndent ?? 16;
+		const treeEnabled = !!treeColumn;
+
+		const treeRowMap = useMemo(() => {
+			if (!treeEnabled) return new Map<any, any>();
+			const m = new Map<any, any>();
+			internalRows.forEach(r => {
+				if (r._treeId !== undefined) {
+					m.set(r._treeId, r);
+				}
+			});
+			return m;
+		}, [internalRows, treeEnabled]);
+
 		// 헤더/바디에서 공통으로 쓸 전체 content width (단순합)
 		const totalContentWidth = useMemo(() => {
 			const sum = effectiveColumns.reduce((acc, col) => {
@@ -294,14 +309,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			}
 			return sum;
 		}, [effectiveColumns, columnWidths, width]);
-
-		// function findRealIndexByDisplayIndex(displayIndex: number): number {
-		// 	if (displayIndex < 0 || displayIndex >= displayRows.length) return -1;
-		// 	const targetRow = displayRows[displayIndex];
-		// 	const targetKey = getRowKey(targetRow);
-		// 	if (targetKey === undefined) return -1;
-		// 	return internalRows.findIndex(r => getRowKey(r) === targetKey);
-		// }
 
 		const flexCount = useMemo(() => getFlexCount(effectiveColumns), [effectiveColumns]);
 
@@ -339,8 +346,26 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 		// ===== 정렬 적용 (전체 정렬 결과) =====
 		const sortedRows = useMemo(() => applySort(filteredRows, sortState), [filteredRows, sortState]);
 
+		// 트리 확장 상태 적용 (조상 중 _treeExpanded === false 인 노드는 숨김)
+		const treeVisibleRows = useMemo(() => {
+			if (!treeEnabled) return sortedRows;
+
+			return sortedRows.filter(row => {
+				let parentId = row._treeParentId;
+				while (parentId != null && parentId !== '') {
+					const parent = treeRowMap.get(parentId);
+					if (!parent) break;
+					if (parent._treeExpanded === false) {
+						return false;
+					}
+					parentId = parent._treeParentId;
+				}
+				return true;
+			});
+		}, [sortedRows, treeEnabled, treeRowMap]);
+
 		// ===== 페이징 계산 =====
-		const clientTotalCount = sortedRows.length;
+		const clientTotalCount = treeVisibleRows.length;
 
 		// pageSize
 		const effectivePageSize =
@@ -379,10 +404,10 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				if (paginationType === 'client') {
 					const start = (effectivePage - 1) * effectivePageSize;
 					const end = start + effectivePageSize;
-					return sortedRows.slice(start, end);
+					return treeVisibleRows.slice(start, end);
 				}
 				// server 모드: 이미 서버에서 page 단위 rows를 내려줬다고 가정
-				return sortedRows;
+				return treeVisibleRows;
 			}
 
 			// 스크롤 페이징 (무한 스크롤 느낌)
@@ -390,15 +415,15 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				if (paginationType === 'client') {
 					// n페이지까지의 데이터를 잘라서 보여줌
 					const end = effectivePage * effectivePageSize;
-					return sortedRows.slice(0, end);
+					return treeVisibleRows.slice(0, end);
 				}
 				// server 모드: 외부에서 rows를 계속 append 해온다고 가정
-				return sortedRows;
+				return treeVisibleRows;
 			}
 
 			// 페이징 없음
-			return sortedRows;
-		}, [sortedRows, paginationMode, paginationType, effectivePage, effectivePageSize]);
+			return treeVisibleRows;
+		}, [treeVisibleRows, paginationMode, paginationType, effectivePage, effectivePageSize]);
 
 		// ===== 히스토리 =====
 		function pushHistoryBeforeChange() {
@@ -445,6 +470,27 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 
 				return prevRedo.slice(0, prevRedo.length - 1);
 			});
+		}
+
+		// 트리 행 확장/접기
+		function toggleTreeRow(row: any) {
+			if (!treeEnabled) return;
+			const targetId = row._treeId;
+			if (targetId == null) return;
+
+			pushHistoryBeforeChange();
+
+			const next = internalRows.map(r =>
+				r._treeId === targetId
+					? {
+							...r,
+							_treeExpanded: r._treeExpanded === false, // undefined/true → false, false → true
+					  }
+					: r,
+			);
+
+			setInternalRows(next);
+			onRowsChange?.(next);
 		}
 
 		// ===== 편집 진입/커밋/취소 =====
@@ -1136,6 +1182,9 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 							bodyBgB={bodyBgB}
 							scrollTop={bodyScrollTop}
 							clientHeight={bodyClientHeight}
+							treeEnabled={treeEnabled}
+							treeIndent={treeIndent}
+							onToggleTreeRow={toggleTreeRow}
 						/>
 					</div>
 				</div>

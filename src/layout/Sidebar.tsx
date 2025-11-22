@@ -14,6 +14,7 @@ const Sidebar: React.FC = () => {
 				{ label: '기본 출력', to: '/basic' },
 				{ label: '헤더 그룹', to: '/header-group' },
 				{ label: '페이지네이션', to: '/pagination' },
+				{ label: '계층구조 출력', to: '/tree' },
 				{ label: 'Export/Import', to: '/export-import' },
 			],
 		},

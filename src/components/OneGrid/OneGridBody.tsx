@@ -1,4 +1,3 @@
-// src/components/OneGrid/OneGridBody.tsx
 import React from 'react';
 import type { CellCoord, OneGridColumn } from '../../types/types';
 import CellEditor from './editor/CellEditor';
@@ -29,6 +28,11 @@ interface OneGridBodyProps {
 	bodyBgB: string;
 	scrollTop: number;
 	clientHeight: number;
+
+	// 트리 그리드용
+	treeEnabled?: boolean;
+	treeIndent?: number;
+	onToggleTreeRow?: (row: any) => void;
 }
 
 const OneGridBody: React.FC<OneGridBodyProps> = ({
@@ -55,6 +59,9 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 	bodyBgB,
 	scrollTop,
 	clientHeight,
+	treeEnabled,
+	treeIndent = 16,
+	onToggleTreeRow,
 }) => {
 	const totalRows = displayRows.length;
 
@@ -171,6 +178,104 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 										};
 									}
 
+									const isTreeCol = treeEnabled && col.isTreeColumn;
+
+									let content: React.ReactNode;
+
+									if (isEditingNow) {
+										content = (
+											<CellEditor
+												column={renderCol}
+												draft={draft}
+												rowHeight={rowHeight}
+												onChangeDraft={v => setDraft(v)}
+												onCommit={onCommitEdit}
+												onCancel={onCancelEdit}
+												onTabNav={onTabNav}
+											/>
+										);
+									} else if (isTreeCol) {
+										const level: number = Number(row._treeLevel ?? 0);
+										const hasChildren: boolean = !!row._treeHasChildren;
+										const expanded: boolean = row._treeExpanded !== false;
+
+										content = (
+											<div
+												style={{
+													display: 'flex',
+													alignItems: 'center',
+													width: '100%',
+												}}
+											>
+												{/* 들여쓰기 */}
+												<span
+													style={{
+														display: 'inline-block',
+														width: level * treeIndent,
+														flex: '0 0 auto',
+													}}
+												/>
+												{/* 토글 아이콘 */}
+												{hasChildren && (
+													<span
+														style={{
+															width: 14,
+															textAlign: 'center',
+															cursor: 'pointer',
+															userSelect: 'none',
+															flex: '0 0 auto',
+															fontSize: 10,
+														}}
+														onClick={e => {
+															e.stopPropagation();
+															onToggleTreeRow?.(row);
+														}}
+													>
+														{expanded ? '▼' : '▶'}
+													</span>
+												)}
+												{/* 폴더/leaf 아이콘 */}
+												<span
+													style={{
+														marginLeft: 2,
+														marginRight: 4,
+														flex: '0 0 auto',
+														fontSize: 11,
+													}}
+												>
+													{hasChildren ? (expanded ? '📂' : '📁') : '•'}
+												</span>
+												{/* 실제 내용 */}
+												<div
+													style={{
+														flex: 1,
+														minWidth: 0,
+													}}
+												>
+													<CellRenderer
+														column={renderCol}
+														value={rawVal}
+														row={row}
+														rowIndex={rowIndex}
+														colIndex={colIndex}
+														rowHeight={rowHeight}
+													/>
+												</div>
+											</div>
+										);
+									} else {
+										content = (
+											<CellRenderer
+												column={renderCol}
+												value={rawVal}
+												row={row}
+												rowIndex={rowIndex}
+												colIndex={colIndex}
+												rowHeight={rowHeight}
+											/>
+										);
+									}
+
 									return (
 										<div
 											key={col.field}
@@ -192,26 +297,7 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 											onKeyDown={e => onCellKeyDown(e, rowIndex, colIndex)}
 											tabIndex={0}
 										>
-											{isEditingNow ? (
-												<CellEditor
-													column={renderCol}
-													draft={draft}
-													rowHeight={rowHeight}
-													onChangeDraft={v => setDraft(v)}
-													onCommit={onCommitEdit}
-													onCancel={onCancelEdit}
-													onTabNav={onTabNav}
-												/>
-											) : (
-												<CellRenderer
-													column={renderCol}
-													value={rawVal}
-													row={row}
-													rowIndex={rowIndex}
-													colIndex={colIndex}
-													rowHeight={rowHeight}
-												/>
-											)}
+											{content}
 										</div>
 									);
 								})}

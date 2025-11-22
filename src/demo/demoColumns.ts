@@ -296,3 +296,64 @@ export function createOptionsColumns(setRows: React.Dispatch<React.SetStateActio
 	// 옵션 데모는 컬럼 종류보단 "동작" 위주라 거의 다 써도 됨
 	return all;
 }
+
+/** 6) 트리 그리드 데모용 */
+export function createTreeColumns(): OneGridColumn[] {
+	return [
+		{
+			field: 'taskId',
+			headerName: 'ID',
+			width: 150,
+			align: 'left',
+			sortable: false,
+			isTreeColumn: true, // 트리 컬럼 표시
+			treeIndent: 18, // 레벨별 들여쓰기
+			renderer: { type: 'text' },
+		},
+		{
+			field: 'taskName',
+			headerName: 'Task Name',
+			align: 'left',
+			sortable: false,
+			renderer: { type: 'text' },
+		},
+		{
+			field: 'charge',
+			headerName: 'Charge',
+			width: 140,
+			align: 'left',
+			renderer: { type: 'text' },
+		},
+		{
+			field: 'complete',
+			headerName: 'Complete(%)',
+			width: 110,
+			align: 'right',
+			renderer: { type: 'text' },
+			editor: { type: 'number', step: 1, min: 0, max: 100 },
+			formatter: createNumberFormatter({
+				useGrouping: false,
+				decimalPlaces: 0,
+				unit: '%',
+			}),
+		},
+		{
+			field: 'startDate',
+			headerName: 'Start Date',
+			width: 120,
+			align: 'center',
+			renderer: { type: 'text' },
+			editor: { type: 'date' },
+			formatter: createDateFormatter({ format: 'yyyy/MM/dd' }),
+		},
+		{
+			field: 'endDate',
+			headerName: 'End Date',
+			width: 120,
+			align: 'center',
+			renderer: { type: 'text' },
+			editor: { type: 'date' },
+			formatter: createDateFormatter({ format: 'yyyy/MM/dd' }),
+		},
+	];
+}

@@ -84,6 +84,10 @@ export interface OneGridColumn {
 	filterable?: boolean;
 	filterOptions?: { value: any; label: string }[];
 	children?: OneGridColumn[];
+
+	/** 트리 그리드용 옵션 */
+	isTreeColumn?: boolean; // 이 컬럼을 트리 표현 컬럼으로 사용 (indent + expand icon)
+	treeIndent?: number; // level 당 들여쓰기(px), 기본 16
 }
 
 export interface OneGridOptions {

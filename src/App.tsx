@@ -13,6 +13,7 @@ import RendererDemoPage from './pages/RendererDemoPage';
 import RowOpsDemoPage from './pages/RowOpsDemoPage';
 import { ThemeProvider } from './theme/ThemeContext';
 import ExportImportDemoPage from './pages/ExportImportDemoPage';
+import TreeGridDemoPage from './pages/TreeGridDemoPage';
 
 const App: React.FC = () => {
 	return (
@@ -30,6 +31,7 @@ const App: React.FC = () => {
 						<Route path="/row-ops" element={<RowOpsDemoPage />} />
 						<Route path="/pagination" element={<PaginationDemoPage />} />
 						<Route path="/export-import" element={<ExportImportDemoPage />} />
+						<Route path="/tree" element={<TreeGridDemoPage />} />
 					</Route>
 				</Routes>
 			</HashRouter>

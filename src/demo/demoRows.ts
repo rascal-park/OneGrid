@@ -424,3 +424,153 @@ export const DEMO_QUARTER_ROWS = [
 		y23m12: 120,
 	},
 ];
+
+// 트리 그리드 데모용 계층 데이터 (children 기반)
+// 서버에서 내려오는 구조를 흉내낸 예제
+export interface DemoTreeNode {
+	id: string;
+	taskId: string;
+	taskName: string;
+	charge: string;
+	complete: number;
+	startDate: string;
+	endDate: string;
+	children?: DemoTreeNode[];
+}
+
+export const DEMO_TREE_NODES: DemoTreeNode[] = [
+	{
+		id: 'T0',
+		taskId: 'T0',
+		taskName: 'Proposal of Project',
+		charge: 'Lawrence',
+		complete: 62,
+		startDate: '2024-02-01',
+		endDate: '2024-08-21',
+		children: [
+			{
+				id: 'T1',
+				taskId: 'T1',
+				taskName: 'Gathering of idea',
+				charge: 'Anna',
+				complete: 99,
+				startDate: '2024-02-01',
+				endDate: '2024-03-31',
+				children: [
+					{
+						id: 'T8',
+						taskId: 'T8',
+						taskName: 'Market research',
+						charge: 'Steve',
+						complete: 50,
+						startDate: '2024-03-01',
+						endDate: '2024-05-31',
+					},
+				],
+			},
+			{
+				id: 'T14',
+				taskId: 'T14',
+				taskName: 'Writing Proposal',
+				charge: 'Alvin',
+				complete: 47,
+				startDate: '2024-06-01',
+				endDate: '2024-08-21',
+				children: [
+					{
+						id: 'T15',
+						taskId: 'T15',
+						taskName: 'State our Goal',
+						charge: 'Wayne Collins',
+						complete: 55,
+						startDate: '2024-06-01',
+						endDate: '2024-06-10',
+					},
+					{
+						id: 'T16',
+						taskId: 'T16',
+						taskName: 'Clarify our goal',
+						charge: 'Rafael Dick',
+						complete: 16,
+						startDate: '2024-06-11',
+						endDate: '2024-06-30',
+					},
+					{
+						id: 'T17',
+						taskId: 'T17',
+						taskName: 'State detail subtitle',
+						charge: 'Witchmond',
+						complete: 95,
+						startDate: '2024-06-15',
+						endDate: '2024-07-15',
+					},
+					{
+						id: 'T18',
+						taskId: 'T18',
+						taskName: 'State result of market research',
+						charge: 'Alvin Kim',
+						complete: 3,
+						startDate: '2024-07-01',
+						endDate: '2024-08-10',
+					},
+					{
+						id: 'T19',
+						taskId: 'T19',
+						taskName: 'State',
+						charge: 'Gerry Gross',
+						complete: 7,
+						startDate: '2024-07-01',
+						endDate: '2024-08-10',
+					},
+					{
+						id: 'T20',
+						taskId: 'T20',
+						taskName: 'Clarify conclusion and distinction',
+						charge: 'Ken Muore',
+						complete: 75,
+						startDate: '2024-07-27',
+						endDate: '2024-08-15',
+					},
+					{
+						id: 'T21',
+						taskId: 'T21',
+						taskName: 'Prove your conclusion',
+						charge: 'Jim Macallon',
+						complete: 91,
+						startDate: '2024-08-01',
+						endDate: '2024-08-21',
+					},
+				],
+			},
+		],
+	},
+	{
+		id: 'T30',
+		taskId: 'T30',
+		taskName: 'Planning',
+		charge: 'Jeffrey',
+		complete: 13,
+		startDate: '2024-08-22',
+		endDate: '2024-12-18',
+		children: [
+			{
+				id: 'T50',
+				taskId: 'T50',
+				taskName: 'Design',
+				charge: 'Raymond',
+				complete: 0,
+				startDate: '2024-12-19',
+				endDate: '2025-05-31',
+			},
+			{
+				id: 'T70',
+				taskId: 'T70',
+				taskName: 'Implementation',
+				charge: 'Betty',
+				complete: 0,
+				startDate: '2025-06-01',
+				endDate: '2026-05-31',
+			},
+		],
+	},
+];
