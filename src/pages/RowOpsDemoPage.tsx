@@ -150,7 +150,6 @@ const RowOpsDemoPage: React.FC = () => {
 					<button type="button" className="docs-btn-sm" onClick={handleAddAtActive}>
 						＋ 선택 위치에 추가(index)
 					</button>
-
 					{/* 삭제 */}
 					<button type="button" className="docs-btn-sm" onClick={handleRemoveFirst}>
 						－ 첫 행 삭제
@@ -164,18 +163,10 @@ const RowOpsDemoPage: React.FC = () => {
 					<button type="button" className="docs-btn-sm" onClick={handleRemoveSelectedRows}>
 						－ 선택(체크박스) 행 삭제
 					</button>
-
-					{/* 초기화 */}
-					<button type="button" className="docs-btn-sm" onClick={handleResetEmpty}>
-						⟳ 초기화 (빈 그리드)
-					</button>
-					<button type="button" className="docs-btn-sm" onClick={handleResetWithDemo}>
-						⟳ 초기화 (DEMO_ROWS)
-					</button>
 				</div>
 
 				{/* 2줄차: CUD/선택 상태 조회 버튼 */}
-				<div className="docs-toolbar" style={{ marginBottom: 8 }}>
+				<div className="docs-toolbar" style={{ marginBottom: 5 }}>
 					<button type="button" className="docs-btn-sm" onClick={handleInsertRows}>
 						신규 행 보기 (getInsertedRows)
 					</button>
@@ -194,6 +185,18 @@ const RowOpsDemoPage: React.FC = () => {
 					<button type="button" className="docs-btn-sm" onClick={handleGetFocusedRows}>
 						포커스 행 보기 (getFocusedRows)
 					</button>
+				</div>
+
+				{/* 3줄차: 그리드 초기화/변경내역 보기 버튼 */}
+				<div className="docs-toolbar" style={{ marginBottom: 8 }}>
+					{/* 초기화 */}
+					<button type="button" className="docs-btn-sm" onClick={handleResetEmpty}>
+						⟳ 초기화 (빈 그리드)
+					</button>
+					<button type="button" className="docs-btn-sm" onClick={handleResetWithDemo}>
+						⟳ 초기화 (DEMO_ROWS)
+					</button>
+					{/* 변경 내역 보기 */}
 					<button type="button" className="docs-btn-sm" onClick={handleShowChanged}>
 						변경 내역 보기 (getChangedRows)
 					</button>

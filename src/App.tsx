@@ -12,6 +12,7 @@ import PaginationDemoPage from './pages/PaginationDemoPage';
 import RendererDemoPage from './pages/RendererDemoPage';
 import RowOpsDemoPage from './pages/RowOpsDemoPage';
 import { ThemeProvider } from './theme/ThemeContext';
+import ExportImportDemoPage from './pages/ExportImportDemoPage';
 
 const App: React.FC = () => {
 	return (
@@ -28,6 +29,7 @@ const App: React.FC = () => {
 						<Route path="/header-group" element={<HeaderGroupDemoPage />} />
 						<Route path="/row-ops" element={<RowOpsDemoPage />} />
 						<Route path="/pagination" element={<PaginationDemoPage />} />
+						<Route path="/export-import" element={<ExportImportDemoPage />} />
 					</Route>
 				</Routes>
 			</HashRouter>
