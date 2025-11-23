@@ -27,10 +27,10 @@ const Sidebar: React.FC = () => {
 			],
 		},
 		{
-			groupLabel: '그리드 옵션/이벤트 함수',
+			groupLabel: 'Doc',
 			children: [
-				{ label: '옵션', to: '/options' },
-				{ label: '이벤트', to: '/row-ops' },
+				{ label: '옵션/함수', to: '/api-doc' },
+				{ label: '렌더러/에디터/포메터', to: '/column-doc' },
 			],
 		},
 	];
@@ -46,11 +46,17 @@ const Sidebar: React.FC = () => {
 				padding: '16px 14px',
 				boxSizing: 'border-box',
 				color: 'var(--sidebar-fg)',
+
+				// 뷰포트 기준으로 고정
+				position: 'sticky',
+				top: 0,
+				alignSelf: 'flex-start',
+				height: '100vh',
 			}}
 		>
 			<div style={{ fontWeight: 600, marginBottom: 16, fontSize: 14 }}>OneGrid Docs</div>
 
-			<nav style={{ fontSize: 13 }}>
+			<nav style={{ fontSize: 13, overflowY: 'auto', paddingRight: 4 }}>
 				{menuItems.map((group, gi) => (
 					<div key={gi} style={{ marginBottom: 16 }}>
 						<div
@@ -91,6 +97,7 @@ const Sidebar: React.FC = () => {
 				))}
 			</nav>
 
+			{/* 이 블록은 sidebar 높이(100vh)의 맨 아래에 고정 */}
 			<div
 				style={{
 					marginTop: 'auto',
@@ -104,6 +111,7 @@ const Sidebar: React.FC = () => {
 				<button
 					type="button"
 					onClick={toggleTheme}
+					className="docs-btn-sm"
 					style={{
 						width: '100%',
 						display: 'inline-flex',

@@ -1,3 +1,4 @@
+// src/components/OneGrid/OneGrid.tsx
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
 import type { CellCoord, OneGridColumn, OneGridHandle, OneGridOptions, OneGridProps } from '../../types/types';
@@ -82,11 +83,9 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 		const autoIdCounterRef = useRef(0);
 
 		function generateInternalKey(): string {
-			// 브라우저 환경이면 거의 다 있음
 			if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
 				return crypto.randomUUID();
 			}
-			// 혹시 모를 환경 대비: timestamp + counter
 			autoIdCounterRef.current += 1;
 			return `og_${Date.now()}_${autoIdCounterRef.current}`;
 		}
@@ -493,6 +492,116 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			onRowsChange?.(next);
 		}
 
+		// === 트리 드래그&드롭 처리 ===
+		function handleTreeRowDrop(
+			sourceRowKey: string | number,
+			targetRowKey: string | number | null,
+			mode: 'before' | 'after' | 'child',
+		) {
+			if (!treeEnabled) return;
+
+			pushHistoryBeforeChange();
+
+			// 1) 이동할 블록(source + 서브트리) 찾기
+			const srcIndex = internalRows.findIndex(r => getRowKey(r) === sourceRowKey);
+			if (srcIndex < 0) return;
+
+			const srcRow = internalRows[srcIndex];
+			const srcLevel = srcRow._treeLevel ?? 0;
+
+			const movingBlock: any[] = [];
+			movingBlock.push(srcRow);
+
+			let endIndex = srcIndex + 1;
+			while (endIndex < internalRows.length) {
+				const cand = internalRows[endIndex];
+				const lvl = cand._treeLevel ?? 0;
+				// 원래 루트보다 깊은 애들은 서브트리로 같이 이동
+				if (lvl > srcLevel) {
+					movingBlock.push(cand);
+					endIndex++;
+				} else {
+					break;
+				}
+			}
+
+			let next = [...internalRows];
+			// 원래 자리에서 블록 삭제
+			next.splice(srcIndex, movingBlock.length);
+
+			// 2) 타겟/부모/레벨 계산
+			let targetIndex = -1;
+			let targetRow: any | null = null;
+
+			if (targetRowKey != null) {
+				targetIndex = next.findIndex(r => getRowKey(r) === targetRowKey);
+				if (targetIndex < 0) return;
+				targetRow = next[targetIndex];
+			}
+
+			let insertIndex = 0;
+			let newParentId: any = null;
+			let newLevel = 0;
+
+			if (!targetRow) {
+				// 루트 맨 아래로
+				insertIndex = next.length;
+				newParentId = null;
+				newLevel = 0;
+			} else if (mode === 'child') {
+				// 자식으로
+				insertIndex = targetIndex + 1;
+				newParentId = targetRow._treeId;
+				newLevel = (targetRow._treeLevel ?? 0) + 1;
+
+				targetRow._treeHasChildren = true;
+				targetRow._treeExpanded = true;
+			} else {
+				// 형제(before/after)
+				newParentId = targetRow._treeParentId ?? null;
+				newLevel = targetRow._treeLevel ?? 0;
+				insertIndex = mode === 'before' ? targetIndex : targetIndex + 1;
+			}
+
+			// 3) 레벨 보정
+			const levelDelta = newLevel - srcLevel;
+
+			const updatedBlock = movingBlock.map((r, idx) => {
+				if (idx === 0) {
+					return {
+						...r,
+						_treeParentId: newParentId,
+						_treeLevel: newLevel,
+					};
+				}
+				return {
+					...r,
+					_treeLevel: (r._treeLevel ?? 0) + levelDelta,
+				};
+			});
+
+			// 4) 새 위치에 삽입
+			next.splice(insertIndex, 0, ...updatedBlock);
+
+			// 5) _treeHasChildren 재계산
+			const idSet = new Set(next.map(r => r._treeId));
+			const hasChildMap = new Map<any, boolean>();
+			next.forEach(r => {
+				const pid = r._treeParentId;
+				if (pid != null && idSet.has(pid)) {
+					hasChildMap.set(pid, true);
+				}
+			});
+
+			next = next.map(r => ({
+				...r,
+				_treeHasChildren: !!hasChildMap.get(r._treeId),
+			}));
+
+			setInternalRows(next);
+			onRowsChange?.(next);
+		}
+
 		// ===== 편집 진입/커밋/취소 =====
 		function enterEditMode(target: CellCoord, initialDraft?: string) {
 			if (!editableGrid) return;
@@ -534,7 +643,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				[colField]: draft,
 			};
 
-			// 상태 플래그 갱신
 			const prevStatus = prevRow[STATUS_FIELD];
 			if (prevStatus !== 'I' && prevStatus !== 'D') {
 				nextRow[STATUS_FIELD] = 'U';
@@ -804,13 +912,11 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			const target = e.currentTarget;
 			const { scrollTop, clientHeight, scrollHeight } = target;
 
-			// 스크롤 위치 저장 → Body에서 가상 스크롤 계산에 사용
 			setBodyScrollTop(scrollTop);
 			setBodyClientHeight(clientHeight);
 
 			if (paginationMode !== 'scroll') return;
 
-			// 기존 scroll 페이징 로직
 			if (scrollTop + clientHeight >= scrollHeight - 1) {
 				const nextPage = effectivePage + 1;
 				if (nextPage <= pageCount) {
@@ -823,13 +929,12 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 		function internalAddRow(position: 'first' | 'last' | 'index' = 'last', options?: { index?: number; row?: any }) {
 			pushHistoryBeforeChange();
 
-			// 기본 newRow (일단 빈 객체, 나중에 status 컬럼 등 붙이기 좋게)
 			const baseRow = options?.row ?? {};
 			const withKey = ensureInternalKey(baseRow);
 
 			const newRow = {
 				...withKey,
-				[STATUS_FIELD]: 'I', // 신규 행은 무조건 I
+				[STATUS_FIELD]: 'I',
 			};
 
 			let insertIndex = internalRows.length;
@@ -838,19 +943,15 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				insertIndex = 0;
 			} else if (position === 'index') {
 				if (typeof options?.index === 'number') {
-					// 명시적인 index 가 있으면 우선
 					insertIndex = Math.min(Math.max(options.index, 0), internalRows.length);
 				} else if (activeCell) {
-					// activeCell 기준으로 internalRows 인덱스 찾기
 					const targetKey = activeCell.rowKey;
 					const realIndex = internalRows.findIndex(r => getRowKey(r) === targetKey);
 					insertIndex = realIndex >= 0 ? realIndex : internalRows.length;
 				} else {
-					// activeCell도 없고 index도 없음 → 마지막에
 					insertIndex = internalRows.length;
 				}
 			} else {
-				// 'last' 또는 undefined
 				insertIndex = internalRows.length;
 			}
 
@@ -860,7 +961,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			setInternalRows(next);
 			onRowsChange?.(next);
 
-			// 구조가 바뀌었으니 selection/편집 상태는 리셋
 			clearSelectionState();
 		}
 
@@ -868,21 +968,17 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 		function internalRemoveRow(position: 'first' | 'last' | 'index' = 'last', options?: { index?: number }) {
 			if (internalRows.length === 0) return;
 
-			// 1) 어떤 rowKey를 지울지 먼저 결정
 			let targetRowKey: string | number | undefined;
 
 			if (position === 'first') {
-				// 화면에 보이는 첫 행 기준
 				const firstVisible = filteredRows[0];
 				if (!firstVisible) return;
 				targetRowKey = getRowKey(firstVisible);
 			} else if (position === 'last') {
-				// 화면에 보이는 마지막 행 기준
 				const lastVisible = filteredRows[filteredRows.length - 1];
 				if (!lastVisible) return;
 				targetRowKey = getRowKey(lastVisible);
 			} else if (position === 'index') {
-				// index 모드: 명시 index → filteredRows 기준, 아니면 activeCell 기준
 				if (typeof options?.index === 'number') {
 					const visibleRow = filteredRows[options.index];
 					if (visibleRow) {
@@ -891,13 +987,11 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				} else if (activeCell) {
 					targetRowKey = activeCell.rowKey;
 				} else {
-					// index도 없고 activeCell도 없으면, 화면 마지막 행 기준
 					const lastVisible = filteredRows[filteredRows.length - 1];
 					if (!lastVisible) return;
 					targetRowKey = getRowKey(lastVisible);
 				}
 			} else {
-				// 혹시 다른 값이 들어와도 그냥 화면 마지막 행 기준으로
 				const lastVisible = filteredRows[filteredRows.length - 1];
 				if (!lastVisible) return;
 				targetRowKey = getRowKey(lastVisible);
@@ -905,11 +999,9 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 
 			if (!targetRowKey) return;
 
-			// 2) internalRows에서 실제 인덱스 찾기
 			const removeIndex = internalRows.findIndex(r => getRowKey(r) === targetRowKey);
 			if (removeIndex < 0) return;
 
-			// 3) 기존 삭제 로직 재사용
 			pushHistoryBeforeChange();
 
 			const targetRow = internalRows[removeIndex];
@@ -918,10 +1010,8 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			let next: any[];
 
 			if (prevStatus === 'I') {
-				// 신규행은 완전 제거
 				next = internalRows.filter((_, idx) => idx !== removeIndex);
 			} else {
-				// 기존행은 D 플래그만
 				next = internalRows.map((row, idx) =>
 					idx === removeIndex
 						? {
@@ -949,7 +1039,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			for (const row of internalRows) {
 				const key = getRowKey(row);
 				if (key === undefined || !checkedRowKeys.has(key)) {
-					// 체크 안된 행은 그대로 유지
 					next.push(row);
 					continue;
 				}
@@ -957,11 +1046,9 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				const prevStatus = row[STATUS_FIELD];
 
 				if (prevStatus === 'I') {
-					// 신규행은 완전 제거 → next 에 안 넣음
 					continue;
 				}
 
-				// 기존행은 D로 마킹해서 next에 넣어둠
 				next.push({
 					...row,
 					[STATUS_FIELD]: 'D',
@@ -983,7 +1070,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			setInternalRows(withKeys);
 			onRowsChange?.(withKeys);
 
-			// 히스토리/선택/체크박스 다 리셋
 			setUndoStack([]);
 			setRedoStack([]);
 			setCheckedRowKeys(new Set());
@@ -1021,7 +1107,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				enterEditMode(coord);
 			},
 
-			// === 여기부터 새로 추가 ===
 			addRow(position, options) {
 				internalAddRow(position ?? 'last', options);
 			},
@@ -1078,7 +1163,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 				};
 			},
 
-			// 페이지 이동
 			gotoPage(page: number) {
 				changePage(page);
 			},
@@ -1135,7 +1219,7 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 					>
 						<OneGridHeader
 							effectiveColumns={effectiveColumns}
-							groupColumns={columns} // 원본 트리 기준으로 그룹 헤더 계산
+							groupColumns={columns}
 							rowHeight={headerHeight}
 							headerAlign={headerAlign}
 							headerJustify={headerJustify}
@@ -1185,6 +1269,7 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 							treeEnabled={treeEnabled}
 							treeIndent={treeIndent}
 							onToggleTreeRow={toggleTreeRow}
+							onTreeRowDrop={handleTreeRowDrop}
 						/>
 					</div>
 				</div>
@@ -1202,7 +1287,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 							gap: 8,
 						}}
 					>
-						{/* 좌측: page size */}
 						<div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
 							<span style={{ opacity: 0.8 }}>Rows / page</span>
 							<select
@@ -1226,7 +1310,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 							</select>
 						</div>
 
-						{/* 중앙: Page [input] / pageCount */}
 						<div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
 							<span>Page</span>
 							<input
@@ -1258,7 +1341,6 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 							<span style={{ opacity: 0.7, marginLeft: 8 }}>Total {totalCount.toLocaleString()}</span>
 						</div>
 
-						{/* 우측: ⏮ ◀ ▶ ⏭ */}
 						<div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
 							<PagingButton disabled={effectivePage <= 1} onClick={() => changePage(1)}>
 								⏮

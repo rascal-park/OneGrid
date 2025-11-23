@@ -14,6 +14,8 @@ import RowOpsDemoPage from './pages/RowOpsDemoPage';
 import { ThemeProvider } from './theme/ThemeContext';
 import ExportImportDemoPage from './pages/ExportImportDemoPage';
 import TreeGridDemoPage from './pages/TreeGridDemoPage';
+import OneGridApiDocPage from './pages/OneGridApiDocPage';
+import OneGridColumnDocPage from './pages/OneGridColumnDocPage';
 
 const App: React.FC = () => {
 	return (
@@ -32,6 +34,8 @@ const App: React.FC = () => {
 						<Route path="/pagination" element={<PaginationDemoPage />} />
 						<Route path="/export-import" element={<ExportImportDemoPage />} />
 						<Route path="/tree" element={<TreeGridDemoPage />} />
+						<Route path="/api-doc" element={<OneGridApiDocPage />} />
+						<Route path="/column-doc" element={<OneGridColumnDocPage />} />
 					</Route>
 				</Routes>
 			</HashRouter>

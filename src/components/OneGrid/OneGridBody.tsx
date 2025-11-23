@@ -1,3 +1,4 @@
+// src/components/OneGrid/OneGridBody.tsx
 import React from 'react';
 import type { CellCoord, OneGridColumn } from '../../types/types';
 import CellEditor from './editor/CellEditor';
@@ -33,6 +34,13 @@ interface OneGridBodyProps {
 	treeEnabled?: boolean;
 	treeIndent?: number;
 	onToggleTreeRow?: (row: any) => void;
+
+	// 트리 드래그&드롭
+	onTreeRowDrop?: (
+		sourceRowKey: string | number,
+		targetRowKey: string | number | null,
+		mode: 'before' | 'after' | 'child',
+	) => void;
 }
 
 const OneGridBody: React.FC<OneGridBodyProps> = ({
@@ -62,12 +70,13 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 	treeEnabled,
 	treeIndent = 16,
 	onToggleTreeRow,
+	onTreeRowDrop,
 }) => {
 	const totalRows = displayRows.length;
 
 	// ===== 가상 스크롤 범위 계산 =====
 	const hasViewport = clientHeight > 0 && rowHeight > 0;
-	const overscan = 5; // 위/아래로 여분으로 그릴 행 수
+	const overscan = 5;
 
 	let startIndex = 0;
 	let endIndex = totalRows;
@@ -88,15 +97,26 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 				backgroundColor: bodyBgA,
 				position: 'relative',
 			}}
+			onDragOver={e => {
+				if (!treeEnabled) return;
+				// 루트로 드랍 가능하게 하려면 기본 동작 막기
+				e.preventDefault();
+			}}
+			onDrop={e => {
+				if (!treeEnabled || !onTreeRowDrop) return;
+				// row에서 처리하지 않은 드롭만 이쪽으로 옴
+				e.preventDefault();
+				const srcKey = e.dataTransfer.getData('text/plain');
+				if (!srcKey) return;
+				onTreeRowDrop(srcKey, null, 'after'); // 루트 맨 아래로
+			}}
 		>
-			{/* 전체 높이는 전체 행 수 기준으로 유지 */}
 			<div
 				style={{
 					position: 'relative',
 					height: totalRows * rowHeight,
 				}}
 			>
-				{/* 실제 렌더링되는 행들의 컨테이너: startIndex만큼 아래로 밀어서 그리기 */}
 				<div
 					style={{
 						position: 'absolute',
@@ -106,7 +126,6 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 					}}
 				>
 					{visibleRows.map((row, localIndex) => {
-						// 실제 인덱스 (displayRows 기준)
 						const rowIndex = startIndex + localIndex;
 						const rowKeyVal = getRowKey(row);
 						const zebraBg = rowIndex % 2 === 0 ? bodyBgA : bodyBgB;
@@ -121,6 +140,34 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 									backgroundColor: zebraBg,
 									height: rowHeight,
 									lineHeight: `${rowHeight}px`,
+								}}
+								draggable={!!treeEnabled}
+								onDragStart={e => {
+									if (!treeEnabled || rowKeyVal == null) return;
+									e.dataTransfer.effectAllowed = 'move';
+									e.dataTransfer.setData('text/plain', String(rowKeyVal));
+								}}
+								onDragOver={e => {
+									if (!treeEnabled) return;
+									e.preventDefault();
+								}}
+								onDrop={e => {
+									if (!treeEnabled || !onTreeRowDrop || rowKeyVal == null) return;
+									e.preventDefault();
+									e.stopPropagation(); // 루트 onDrop으로 안 올라가게
+
+									const sourceKey = e.dataTransfer.getData('text/plain');
+									if (!sourceKey || String(sourceKey) === String(rowKeyVal)) return;
+
+									const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+									const y = e.clientY - rect.top;
+
+									let mode: 'before' | 'after' | 'child';
+									if (y < rect.height / 3) mode = 'before';
+									else if (y > (rect.height * 2) / 3) mode = 'after';
+									else mode = 'child';
+
+									onTreeRowDrop(sourceKey, rowKeyVal, mode);
 								}}
 							>
 								{effectiveColumns.map((col, colIndex) => {
@@ -154,7 +201,6 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 
 									let renderCol = col;
 
-									// 체크박스 컬럼은 내부에서 렌더러 주입
 									if (col.field === '__rowCheck__') {
 										renderCol = {
 											...col,
@@ -207,7 +253,6 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 													width: '100%',
 												}}
 											>
-												{/* 들여쓰기 */}
 												<span
 													style={{
 														display: 'inline-block',
@@ -215,7 +260,6 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 														flex: '0 0 auto',
 													}}
 												/>
-												{/* 토글 아이콘 */}
 												{hasChildren && (
 													<span
 														style={{
@@ -234,7 +278,6 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 														{expanded ? '▼' : '▶'}
 													</span>
 												)}
-												{/* 폴더/leaf 아이콘 */}
 												<span
 													style={{
 														marginLeft: 2,
@@ -245,7 +288,6 @@ const OneGridBody: React.FC<OneGridBodyProps> = ({
 												>
 													{hasChildren ? (expanded ? '📂' : '📁') : '•'}
 												</span>
-												{/* 실제 내용 */}
 												<div
 													style={{
 														flex: 1,

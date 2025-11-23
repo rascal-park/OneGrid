@@ -121,7 +121,7 @@ const PaginationDemoPage: React.FC = () => {
 					style={{
 						margin: 0,
 						padding: 12,
-						backgroundColor: 'rgba(0,0,0,0.4)',
+						backgroundColor: 'var(--bg)',
 						borderRadius: 4,
 						fontSize: 12,
 						maxHeight: 220,
