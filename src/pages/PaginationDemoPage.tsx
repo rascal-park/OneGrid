@@ -102,8 +102,8 @@ const PaginationDemoPage: React.FC = () => {
 						pagination: {
 							mode, // 'none' | 'page' | 'scroll'
 							type: 'client', // 지금은 프론트 페이징
-							defaultPageSize: 15,
-							pageSizeOptions: [15, 30, 50, 100],
+							defaultPageSize: 20,
+							pageSizeOptions: [20, 40, 60, 80, 100],
 						},
 					}}
 					onRowsChange={setRows}

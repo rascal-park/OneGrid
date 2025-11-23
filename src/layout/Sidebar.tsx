@@ -27,6 +27,13 @@ const Sidebar: React.FC = () => {
 			],
 		},
 		{
+			groupLabel: '그리드 옵션/이벤트',
+			children: [
+				{ label: '옵션/함수', to: '/options' },
+				{ label: '이벤트', to: '/row-ops' },
+			],
+		},
+		{
 			groupLabel: 'Doc',
 			children: [
 				{ label: '옵션/함수', to: '/api-doc' },
