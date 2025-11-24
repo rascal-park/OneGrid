@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export function cloneRows(rowsToClone: any[]): any[] {
 	return rowsToClone.map(r => ({ ...r }));
 }

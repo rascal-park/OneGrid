@@ -7,7 +7,6 @@ interface ApiItem {
 	kind: 'formatter' | 'renderer' | 'editor';
 	label: string;
 	description: string;
-	signature?: string;
 	params?: { name: string; desc: string }[];
 	usage: string;
 	notes?: string[];
@@ -21,7 +20,6 @@ const OneGridColumnDocPage: React.FC = () => {
 			name: 'createNumberFormatter',
 			label: '숫자 포매터',
 			description: '숫자 값을 천단위 콤마, 소수점 자리수, 단위(원, 개 등)를 붙여서 표시하기 위한 포매터입니다.',
-			signature: 'createNumberFormatter(options?: NumberFormatterOptions): OneGridFormatterConfig',
 			params: [
 				{
 					name: 'decimalPlaces?: number',
@@ -55,7 +53,6 @@ const OneGridColumnDocPage: React.FC = () => {
 			name: 'createDateFormatter',
 			label: '날짜 포매터',
 			description: 'Date, 문자열, 숫자 형태의 날짜 값을 지정된 포맷 문자열(yyyy-MM-dd 등)로 포맷팅합니다.',
-			signature: 'createDateFormatter(options?: DateFormatterOptions): OneGridFormatterConfig',
 			params: [
 				{
 					name: "format?: 'yyyy-MM-dd' | 'yyyy.MM.dd' | 'yyyy/MM/dd' | 'locale'",
@@ -444,13 +441,6 @@ const OneGridColumnDocPage: React.FC = () => {
 
 				<p className="og-api-desc">{item.description}</p>
 
-				{item.signature && (
-					<div className="og-api-signature">
-						<span className="og-api-signature-label">시그니처</span>
-						<code>{item.signature}</code>
-					</div>
-				)}
-
 				{item.params && item.params.length > 0 && (
 					<div className="og-api-section">
 						<div className="og-api-section-title">파라미터</div>
@@ -604,23 +594,6 @@ const OneGridColumnDocPage: React.FC = () => {
 					letter-spacing: 0.06em;
 					color: var(--muted);
 					margin-bottom: 4px;
-				}
-				.og-api-signature {
-					margin-top: 4px;
-					display: flex;
-					flex-direction: column;
-					gap: 2px;
-				}
-				.og-api-signature-label {
-					font-size: 11px;
-					color: var(--muted);
-				}
-				.og-api-signature code {
-					font-size: 11px;
-					padding: 4px 6px;
-					border-radius: 4px;
-					border: 1px solid var(--panel-border);
-					white-space: pre-wrap;
 				}
 				.og-api-param-list {
 					list-style: none;

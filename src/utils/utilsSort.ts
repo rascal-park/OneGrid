@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export interface SortState {
 	field: string;
 	direction: 'asc' | 'desc';

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { CellCoord, OneGridColumn } from '../types/types';
 
 export function buildRectSelection(

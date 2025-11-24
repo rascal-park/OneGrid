@@ -28,9 +28,7 @@ export function copySelectionToClipboard(
 	}
 
 	const tsv = lines.join('\n');
-	navigator.clipboard.writeText(tsv).catch(() => {
-		/* ignore clipboard errors */
-	});
+	navigator.clipboard.writeText(tsv).catch(() => {});
 }
 
 export async function pasteFromClipboard(
