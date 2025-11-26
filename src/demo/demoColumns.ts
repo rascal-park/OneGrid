@@ -1,6 +1,7 @@
 // src/demo/demoColumns.ts
 import mailIcon from '@assets/icon/icon_email.svg';
 import { createDateFormatter, createNumberFormatter } from '../components/OneGrid/formatter/formatters';
+import { validators } from '../components/OneGrid/validator/validator';
 import type { OneGridColumn } from '../types/types';
 
 const ROLE_OPTIONS = [
@@ -354,6 +355,57 @@ export function createTreeColumns(): OneGridColumn[] {
 			renderer: { type: 'text' },
 			editor: { type: 'date' },
 			formatter: createDateFormatter({ format: 'yyyy/MM/dd' }),
+		},
+	];
+}
+
+/** 7) Validator 그리드 데모용 */
+export function createValidationColumns(): OneGridColumn[] {
+	return [
+		{
+			field: 'email',
+			headerName: '이메일 검증',
+			width: 240,
+			renderer: { type: 'text' },
+			editor: { type: 'text' },
+			validators: [validators.required('이메일은 필수입니다.'), validators.email('이메일 형식이 올바르지 않습니다.')],
+		},
+		{
+			field: 'age',
+			headerName: '숫자 검증 (1~120)',
+			width: 180,
+			align: 'right',
+			renderer: { type: 'text' },
+			editor: { type: 'number', step: 1, min: 1, max: 120 },
+			validators: [
+				validators.required('나이를 입력해 주세요.'),
+				validators.integer('정수만 입력 가능합니다.'),
+				validators.range(1, 120, '1~120 사이만 허용됩니다.'),
+			],
+		},
+		{
+			field: 'koreanName',
+			headerName: '한글만(이름)',
+			width: 180,
+			renderer: { type: 'text' },
+			editor: { type: 'text' },
+			validators: [validators.required('이름은 필수입니다.'), validators.korean('한글만 입력 가능합니다.')],
+		},
+		{
+			field: 'projectCode',
+			headerName: '커스텀 검증 (ON- 접두사)',
+			width: 260,
+			renderer: { type: 'text' },
+			editor: { type: 'text' },
+			validators: [
+				validators.custom(value => {
+					if (!value) return '코드는 필수입니다.';
+					const str = String(value);
+					if (!str.startsWith('ON-')) return '코드는 ON- 으로 시작해야 합니다.';
+					if (str.length < 6) return '코드 길이는 최소 6자 이상이어야 합니다.';
+					return null;
+				}),
+			],
 		},
 	];
 }

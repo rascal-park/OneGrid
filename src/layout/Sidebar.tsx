@@ -24,12 +24,13 @@ const Sidebar: React.FC = () => {
 				{ label: '렌더러', to: '/renderer' },
 				{ label: '에디터', to: '/editor' },
 				{ label: '포매터', to: '/formatter' },
+				{ label: '검증', to: '/validator' },
 			],
 		},
 		{
 			groupLabel: '그리드 옵션/이벤트',
 			children: [
-				{ label: '옵션/함수', to: '/options' },
+				{ label: '옵션', to: '/options' },
 				{ label: '이벤트', to: '/row-ops' },
 			],
 		},

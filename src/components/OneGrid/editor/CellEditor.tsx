@@ -1,5 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import type { OneGridColumn } from '../../../types/types';
+// src/components/OneGrid/core/CellEditor.tsx
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { OneGridColumn, ValidatorFn } from '../../../types/types';
+import { runValidators } from '../validator/validator';
 
 interface CellEditorProps {
 	column: OneGridColumn;
@@ -23,6 +25,22 @@ const CellEditor: React.FC<CellEditorProps> = ({
 	const editorConfig = column.editor;
 	const ref = useRef<any>(null);
 
+	// 현재 셀의 에러 메시지 (있으면 title 툴팁 + 빨간 테두리)
+	const [error, setError] = useState<string | null>(null);
+
+	// validate에서 쓸 draft 최신값
+	const draftRef = useRef<any>(draft);
+	useEffect(() => {
+		draftRef.current = draft;
+	}, [draft]);
+
+	// 컬럼에 정의된 validator 목록 (없으면 undefined)
+	const validators: ValidatorFn[] | undefined = useMemo(() => {
+		const colValidators = column.validators;
+		if (!colValidators) return undefined;
+		return Array.isArray(colValidators) ? colValidators : [colValidators];
+	}, [column.validators]);
+
 	// 공통 focus / select
 	useEffect(() => {
 		if (ref.current) {
@@ -33,10 +51,71 @@ const CellEditor: React.FC<CellEditorProps> = ({
 		}
 	}, []);
 
-	if (!editorConfig) return null;
+	// 값 검증 함수 (옵션: tooltip(브라우저 기본 에러 말풍선)을 바로 띄울지 여부)
+	const validateCurrent = useCallback(
+		(value: any, opts?: { showTooltip?: boolean }): boolean => {
+			if (!validators || validators.length === 0) {
+				setError(null);
+				const el = ref.current as any;
+				if (el && typeof el.setCustomValidity === 'function') {
+					el.setCustomValidity('');
+				}
+				return true;
+			}
 
-	const { type } = editorConfig;
+			const msg = runValidators(validators, value);
+			setError(msg ?? null);
 
+			const el = ref.current as any;
+			if (el && typeof el.setCustomValidity === 'function') {
+				el.setCustomValidity(msg ?? '');
+				if (msg && opts?.showTooltip && typeof el.reportValidity === 'function') {
+					// 브라우저 기본 tooltip을 즉시 표시
+					el.reportValidity();
+				}
+			}
+
+			return !msg;
+		},
+		[validators],
+	);
+
+	// 셀 밖 클릭 시에도 검증 태우기
+	useEffect(() => {
+		if (!validators || validators.length === 0) return;
+
+		const handlePointerDownCapture = (e: PointerEvent | MouseEvent) => {
+			const el = ref.current as HTMLElement | null;
+			if (!el) return;
+
+			const target = e.target as Node;
+
+			// 현재 에디터 안을 클릭한 경우는 무시
+			if (el === target || el.contains(target)) return;
+
+			// 에디터 밖(=다른 셀 포함)을 클릭했는데 값이 invalid면
+			// 클릭을 막고 에러 tooltip 표시
+			const ok = validateCurrent(draftRef.current, { showTooltip: true });
+			if (!ok) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+			// ok면 그대로 둠 → blur 발생 → tryCommit → 정상 커밋
+		};
+
+		// pointerdown + mousedown 둘 다 캡쳐에서 잡기
+		document.addEventListener('pointerdown', handlePointerDownCapture as any, true);
+		document.addEventListener('mousedown', handlePointerDownCapture as any, true);
+
+		return () => {
+			document.removeEventListener('pointerdown', handlePointerDownCapture as any, true);
+			document.removeEventListener('mousedown', handlePointerDownCapture as any, true);
+		};
+	}, [validators, validateCurrent]);
+
+	const type = editorConfig?.type ?? 'text';
+
+	// 공통 스타일 + 에러 시 빨간 테두리
 	const commonStyle: React.CSSProperties = {
 		width: '100%',
 		height: rowHeight - 6,
@@ -44,24 +123,42 @@ const CellEditor: React.FC<CellEditorProps> = ({
 		fontSize: 12,
 		backgroundColor: 'var(--bg)',
 		color: 'var(--fg)',
-		border: '1px solid #888',
+		border: error ? '1px solid #ff4d4f' : '1px solid #888',
 		borderRadius: 3,
 		padding: '0 6px',
 		outline: 'none',
 		boxSizing: 'border-box',
 	};
 
+	// 입력값 변경 시: draft 변경 + 즉시 검증(tooltip은 commit 시에만)
+	const handleChange = (next: any) => {
+		onChangeDraft(next);
+		validateCurrent(next, { showTooltip: false });
+	};
+
+	// blur / Enter / Tab 전에 검증해서 실패하면 커밋 막기
+	const tryCommit = (viaTab?: boolean, shift?: boolean) => {
+		const ok = validateCurrent(draft, { showTooltip: true });
+		if (!ok) {
+			// 에러가 있으면 커밋하지 않고 편집 유지
+			return;
+		}
+		onCommit();
+		if (viaTab) {
+			onTabNav(!!shift);
+		}
+	};
+
 	function handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
 		if (e.key === 'Enter') {
 			e.preventDefault();
-			onCommit();
+			tryCommit(false);
 		} else if (e.key === 'Escape') {
 			e.preventDefault();
 			onCancel();
 		} else if (e.key === 'Tab') {
 			e.preventDefault();
-			onCommit();
-			onTabNav(e.shiftKey);
+			tryCommit(true, e.shiftKey);
 		}
 	}
 
@@ -71,19 +168,20 @@ const CellEditor: React.FC<CellEditorProps> = ({
 			<input
 				ref={ref}
 				value={draft ?? ''}
-				onChange={e => onChangeDraft(e.target.value)}
-				onBlur={onCommit}
+				onChange={e => handleChange(e.target.value)}
+				onBlur={() => tryCommit(false)}
 				onKeyDown={handleKeyDown}
 				style={commonStyle}
+				title={error ?? ''} // 에러 툴팁 (hover용)
 			/>
 		);
 	}
 
 	// ---------- number ----------
 	if (type === 'number') {
-		const step = editorConfig.step ?? 1;
-		const min = editorConfig.min;
-		const max = editorConfig.max;
+		const step = editorConfig?.step ?? 1;
+		const min = editorConfig?.min;
+		const max = editorConfig?.max;
 
 		return (
 			<input
@@ -93,16 +191,16 @@ const CellEditor: React.FC<CellEditorProps> = ({
 				step={step}
 				min={min}
 				max={max}
-				onChange={e => onChangeDraft(e.target.value)}
-				onBlur={onCommit}
+				onChange={e => handleChange(e.target.value)}
+				onBlur={() => tryCommit(false)}
 				onKeyDown={handleKeyDown}
 				style={commonStyle}
+				title={error ?? ''}
 			/>
 		);
 	}
 
 	// ---------- date ----------
-	// input[type=date] + 오른쪽 달력 아이콘 (동작 유지)
 	if (type === 'date') {
 		const inputRef = ref as React.RefObject<HTMLInputElement>;
 
@@ -115,13 +213,14 @@ const CellEditor: React.FC<CellEditorProps> = ({
 					display: 'flex',
 					alignItems: 'center',
 				}}
+				title={error ?? ''}
 			>
 				<input
 					ref={inputRef}
 					type="date"
 					value={draft ?? ''}
-					onChange={e => onChangeDraft(e.target.value)}
-					onBlur={onCommit}
+					onChange={e => handleChange(e.target.value)}
+					onBlur={() => tryCommit(false)}
 					onKeyDown={handleKeyDown}
 					className="onegrid-date-input"
 					style={{
@@ -133,7 +232,6 @@ const CellEditor: React.FC<CellEditorProps> = ({
 					type="button"
 					tabIndex={-1}
 					onMouseDown={e => {
-						// 포커스 유지 + showPicker는 유저 제스처로 허용
 						e.preventDefault();
 						if (inputRef.current) {
 							(inputRef.current as any).showPicker?.();
@@ -162,12 +260,11 @@ const CellEditor: React.FC<CellEditorProps> = ({
 
 	// ---------- dropdown (단일 / 멀티 공용) ----------
 	if (type === 'dropdown') {
-		const options = editorConfig.options ?? column.renderer?.props?.options ?? [];
-		const multiple = editorConfig.multiple === true;
+		const options = editorConfig?.options ?? column.renderer?.props?.options ?? [];
+		const multiple = editorConfig?.multiple === true;
 
 		// 멀티
 		if (multiple) {
-			// 기존처럼 select multiple 쓰되, Ctrl 없이 클릭만으로 토글
 			const selectedValues: string[] = Array.isArray(draft)
 				? draft.map(v => String(v))
 				: draft != null && draft !== ''
@@ -180,7 +277,7 @@ const CellEditor: React.FC<CellEditorProps> = ({
 			const handleMouseDown = (e: React.MouseEvent<HTMLSelectElement>) => {
 				const target = e.target as HTMLOptionElement;
 				if (target && target.tagName === 'OPTION') {
-					e.preventDefault(); // 기본 선택 동작 막고 직접 토글
+					e.preventDefault();
 					const value = target.value;
 					let next = [...selectedValues];
 					if (next.includes(value)) {
@@ -188,7 +285,7 @@ const CellEditor: React.FC<CellEditorProps> = ({
 					} else {
 						next.push(value);
 					}
-					onChangeDraft(next);
+					handleChange(next);
 				}
 			};
 
@@ -198,12 +295,13 @@ const CellEditor: React.FC<CellEditorProps> = ({
 					multiple
 					value={selectedValues}
 					onMouseDown={handleMouseDown}
-					onBlur={onCommit}
+					onBlur={() => tryCommit(false)}
 					onKeyDown={handleKeyDown}
 					style={{
 						...commonStyle,
-						height: rowHeight - 6, // 싱글과 높이 맞추기
+						height: rowHeight - 6,
 					}}
+					title={error ?? ''}
 				>
 					{options.map((opt: any) => {
 						const v = String(opt.value);
@@ -219,19 +317,18 @@ const CellEditor: React.FC<CellEditorProps> = ({
 			);
 		}
 
-		// 싱글: native select
+		// 싱글
 		const valueStr = draft != null ? String(draft) : '';
 
 		return (
 			<select
 				ref={ref as React.RefObject<HTMLSelectElement>}
 				value={valueStr}
-				onChange={e => {
-					onChangeDraft(e.target.value);
-				}}
-				onBlur={onCommit}
+				onChange={e => handleChange(e.target.value)}
+				onBlur={() => tryCommit(false)}
 				onKeyDown={handleKeyDown}
 				style={commonStyle}
+				title={error ?? ''}
 			>
 				{options.map((opt: any) => (
 					<option key={String(opt.value)} value={String(opt.value)}>
@@ -243,9 +340,8 @@ const CellEditor: React.FC<CellEditorProps> = ({
 	}
 
 	// ---------- combo ----------
-	// 입력 + 옵션 제안 (datalist) – 브라우저 기본 드롭다운으로 안정 동작
 	if (type === 'combo') {
-		const options = editorConfig.options ?? [];
+		const options = editorConfig?.options ?? [];
 		const listId = `onegrid-combo-${column.field}`;
 
 		return (
@@ -255,10 +351,11 @@ const CellEditor: React.FC<CellEditorProps> = ({
 					list={listId}
 					value={draft ?? ''}
 					placeholder="입력 또는 선택"
-					onChange={e => onChangeDraft(e.target.value)}
-					onBlur={onCommit}
+					onChange={e => handleChange(e.target.value)}
+					onBlur={() => tryCommit(false)}
 					onKeyDown={handleKeyDown}
 					style={commonStyle}
+					title={error ?? ''}
 				/>
 				<datalist id={listId}>
 					{options.map((opt: any) => (
@@ -272,7 +369,7 @@ const CellEditor: React.FC<CellEditorProps> = ({
 	}
 
 	// ---------- custom ----------
-	if (type === 'custom' && editorConfig.renderCustomEditor) {
+	if (type === 'custom' && editorConfig?.renderCustomEditor) {
 		return (
 			<>
 				{editorConfig.renderCustomEditor({
@@ -281,8 +378,10 @@ const CellEditor: React.FC<CellEditorProps> = ({
 					rowIndex: 0,
 					colIndex: 0,
 					column,
-					onChange: onChangeDraft,
-					onCommit,
+					onChange: (v: any) => {
+						handleChange(v);
+					},
+					onCommit: () => tryCommit(false),
 					onCancel,
 				})}
 			</>
@@ -294,10 +393,11 @@ const CellEditor: React.FC<CellEditorProps> = ({
 		<input
 			ref={ref}
 			value={draft ?? ''}
-			onChange={e => onChangeDraft(e.target.value)}
-			onBlur={onCommit}
+			onChange={e => handleChange(e.target.value)}
+			onBlur={() => tryCommit(false)}
 			onKeyDown={handleKeyDown}
 			style={commonStyle}
+			title={error ?? ''}
 		/>
 	);
 };

@@ -85,9 +85,12 @@ export interface OneGridColumn {
 	filterOptions?: { value: any; label: string }[];
 	children?: OneGridColumn[];
 
-	/** 트리 그리드용 옵션 */
+	/* 트리 그리드용 옵션 */
 	isTreeColumn?: boolean; // 이 컬럼을 트리 표현 컬럼으로 사용 (indent + expand icon)
 	treeIndent?: number; // level 당 들여쓰기(px), 기본 16
+
+	/* Validator */
+	validators?: ValidatorFn | ValidatorFn[];
 }
 
 export interface OneGridOptions {
@@ -201,3 +204,5 @@ export interface OneGridPaginationOptions {
 	/** 페이지 사이즈 선택 옵션 */
 	pageSizeOptions?: number[];
 }
+
+export type ValidatorFn = (value: any) => string | null;

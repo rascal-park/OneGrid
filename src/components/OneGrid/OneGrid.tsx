@@ -1,7 +1,14 @@
 // src/components/OneGrid/OneGrid.tsx
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
-import type { CellCoord, OneGridColumn, OneGridHandle, OneGridOptions, OneGridProps } from '../../types/types';
+import type {
+	CellCoord,
+	OneGridColumn,
+	OneGridHandle,
+	OneGridOptions,
+	OneGridProps,
+	ValidatorFn,
+} from '../../types/types';
 
 import { filterHiddenColumns, getFlexCount, injectRowNumberColumn } from './layout/columnLayout';
 
@@ -15,6 +22,7 @@ import type { SortState } from '../../utils/utilsSort';
 import OneGridBody from './OneGridBody';
 import OneGridHeader from './OneGridHeader';
 import PagingButton from './pagination/PagingButtion';
+import { runValidators } from './validator/validator';
 
 // 색/스타일 상수 → CSS 변수 사용
 const headerBg = 'var(--grid-header-bg)';
@@ -602,6 +610,28 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			onRowsChange?.(next);
 		}
 
+		// ===== 셀 검증 =====
+		function getColumnValidators(col: OneGridColumn): ValidatorFn[] | undefined {
+			const v = col.validators;
+			if (!v) return undefined;
+			return Array.isArray(v) ? v : [v];
+		}
+
+		// 지금 편집 중인 셀 값(draft)이 유효한지 체크
+		function canLeaveCurrentEditCell(): boolean {
+			if (!editCell) return true;
+
+			const col = effectiveColumns[editCell.colIndex];
+			if (!col) return true;
+
+			const validators = getColumnValidators(col);
+			if (!validators || validators.length === 0) return true;
+
+			const msg = runValidators(validators, draft);
+			// msg가 있으면 검증 실패 → 이동하면 안 됨
+			return !msg;
+		}
+
 		// ===== 편집 진입/커밋/취소 =====
 		function enterEditMode(target: CellCoord, initialDraft?: string) {
 			if (!editableGrid) return;
@@ -778,6 +808,15 @@ const OneGrid = forwardRef<OneGridHandle, OneGridProps>(
 			}
 
 			if (editCell && (editCell.rowIndex !== rowIndex || editCell.colIndex !== colIndex)) {
+				const ok = canLeaveCurrentEditCell();
+				if (!ok) {
+					// 검증 실패하면 commit 안 하고, 셀 이동도 막음
+					e.preventDefault();
+					e.stopPropagation();
+					return;
+				}
+
+				// 검증 통과할 때만 진짜 commit
 				commitEdit();
 			}
 

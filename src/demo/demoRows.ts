@@ -574,3 +574,20 @@ export const DEMO_TREE_NODES: DemoTreeNode[] = [
 		],
 	},
 ];
+
+export const VALIDATION_DEMO_ROWS = [
+	{
+		id: 1,
+		email: 'user1@cj.net',
+		age: 35,
+		koreanName: '홍길동',
+		projectCode: 'ON-001',
+	},
+	{
+		id: 2,
+		email: '',
+		age: '',
+		koreanName: '',
+		projectCode: '',
+	},
+];

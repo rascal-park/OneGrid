@@ -5,17 +5,18 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import DocsLayout from './layout/DocsLayout';
 import BasicGridPage from './pages/BasicGridPage';
 import EditorDemoPage from './pages/EditorDemoPage';
+import ExportImportDemoPage from './pages/ExportImportDemoPage';
 import FormatterDemoPage from './pages/FormatterDemoPage';
 import HeaderGroupDemoPage from './pages/HeaderDemoPage';
+import OneGridApiDocPage from './pages/OneGridApiDocPage';
+import OneGridColumnDocPage from './pages/OneGridColumnDocPage';
 import OptionsDemoPage from './pages/OptionsDemoPage';
 import PaginationDemoPage from './pages/PaginationDemoPage';
 import RendererDemoPage from './pages/RendererDemoPage';
 import RowOpsDemoPage from './pages/RowOpsDemoPage';
-import { ThemeProvider } from './theme/ThemeContext';
-import ExportImportDemoPage from './pages/ExportImportDemoPage';
 import TreeGridDemoPage from './pages/TreeGridDemoPage';
-import OneGridApiDocPage from './pages/OneGridApiDocPage';
-import OneGridColumnDocPage from './pages/OneGridColumnDocPage';
+import ValidationDemoPage from './pages/ValidationDemoPage';
+import { ThemeProvider } from './theme/ThemeContext';
 
 const App: React.FC = () => {
 	return (
@@ -36,6 +37,7 @@ const App: React.FC = () => {
 						<Route path="/tree" element={<TreeGridDemoPage />} />
 						<Route path="/api-doc" element={<OneGridApiDocPage />} />
 						<Route path="/column-doc" element={<OneGridColumnDocPage />} />
+						<Route path="/validator" element={<ValidationDemoPage />} />
 					</Route>
 				</Routes>
 			</HashRouter>
