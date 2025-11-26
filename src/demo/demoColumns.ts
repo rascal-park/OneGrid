@@ -394,7 +394,6 @@ export function createValidationColumns(): OneGridColumn[] {
 		{
 			field: 'projectCode',
 			headerName: '커스텀 검증 (ON- 접두사)',
-			width: 260,
 			renderer: { type: 'text' },
 			editor: { type: 'text' },
 			validators: [
